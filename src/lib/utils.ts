@@ -24,3 +24,6 @@ export function isPdf(url: string) {
   const baseUrl = url.split('?')[0].split('#')[0];
   return baseUrl.toLowerCase().endsWith('.pdf');
 }
+
+export { getOptimizedImageUrl } from './cloudinary';
+

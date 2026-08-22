@@ -13,6 +13,7 @@ import {
 import { deleteProject } from './actions';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { getOptimizedImageUrl } from '@/lib/cloudinary';
 
 interface Project {
   _id: string;
@@ -96,8 +97,9 @@ export default function ProjectsTable({ initialProjects }: ProjectsTableProps) {
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800">
                           <img 
-                            src={project.image} 
+                            src={getOptimizedImageUrl(project.image, { width: 100 })} 
                             alt={project.title} 
+                            loading="lazy"
                             className="w-full h-full object-cover"
                             referrerPolicy="no-referrer"
                           />

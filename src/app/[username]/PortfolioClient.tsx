@@ -10,8 +10,9 @@ import {
   FileDown
 } from 'lucide-react';
 import { FaGithub, FaLinkedin, FaTwitter } from 'react-icons/fa';
+import Image from 'next/image';
 import ProjectDetail from '@/components/ProjectDetail';
-import { getDownloadUrl, isPdf } from '@/lib/utils';
+import { getDownloadUrl, isPdf, getOptimizedImageUrl } from '@/lib/utils';
 
 interface PortfolioClientProps {
   data: {
@@ -237,11 +238,14 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
                 className="relative z-10 w-64 h-64 md:w-[450px] md:h-[450px] rounded-[60px] md:rounded-[100px] overflow-hidden border-[12px] border-white dark:border-zinc-900 shadow-[0_40px_100px_-15px_rgba(0,0,0,0.2)] dark:shadow-[0_40px_100px_-15px_rgba(0,0,0,0.5)]"
               >
                 {profile?.image ? (
-                  <img 
-                    src={profile.image} 
+                  <Image 
+                    src={getOptimizedImageUrl(profile.image, { width: 900 })} 
                     alt={fullName} 
-                    className="w-full h-full object-cover" 
-                    referrerPolicy="no-referrer"
+                    fill
+                    priority
+                    fetchPriority="high"
+                    sizes="(max-width: 768px) 256px, 450px"
+                    className="object-cover" 
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white text-8xl font-black">
@@ -300,11 +304,13 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
                 {/* Image Side */}
                 <div className="lg:col-span-7 order-1 lg:order-1 lg:sticky lg:top-32">
                   <div className="relative aspect-[16/10] rounded-[32px] md:rounded-[48px] overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 shadow-2xl group-hover:shadow-blue-500/20 transition-all duration-700">
-                    <img 
-                      src={project.image} 
+                    <Image 
+                      src={getOptimizedImageUrl(project.image, { width: 1200 })} 
                       alt={project.title} 
-                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
-                      referrerPolicy="no-referrer"
+                      fill
+                      loading="lazy"
+                      sizes="(max-width: 1024px) 100vw, (max-width: 1280px) 58vw, 644px"
+                      className="object-cover transition-transform duration-1000 group-hover:scale-110" 
                     />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center gap-8 backdrop-blur-md">
                       {project.liveLink && (
