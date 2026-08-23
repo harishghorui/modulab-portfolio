@@ -32,12 +32,12 @@ src/
 ├── components/          # Shared UI & Admin components
 ├── lib/                 # Utility functions & DB config
 ├── models/              # Mongoose schemas
-└── middleware.ts        # Advanced multi-tenant routing logic
+└── proxy.ts        # Advanced multi-tenant routing logic
 ```
 
 ## 🚥 Routing Rules
 
-The `middleware.ts` enforces strict boundaries:
+The `proxy.ts` enforces strict boundaries:
 1. **Root Domain:** Only `/` (rewritten to `/platform`) and `/admin`, `/api`, `/login`, etc., are allowed. Other paths (like `/username`) return a 404.
 2. **Subdomain (`dev.`):** The root `/` rewrites to `/portfolio`. Usernames are served directly at the root (e.g., `/harishghorui` -> `src/app/[username]/page.tsx`).
 
