@@ -23,6 +23,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import RichTextEditor from '@/components/admin/RichTextEditor';
 import { toast } from 'sonner';
+import { Devicon } from '@/components/ui/Devicon';
 
 const initialState = {
   error: undefined,
@@ -320,7 +321,7 @@ export default function ProjectForm({ categories, skills, initialData }: Project
                       )}
                     >
                       <div className="w-6 h-6 flex-shrink-0 bg-white dark:bg-zinc-950 rounded p-1 border border-gray-100 dark:border-zinc-800 group-hover:scale-110 transition-transform flex items-center justify-center">
-                        <i className={`${skill.icon} text-xs`}></i>
+                        <Devicon icon={skill.icon} alt={skill.name} className="w-4 h-4 object-contain" />
                       </div>
                       <span className="truncate">{skill.name}</span>
                       {isSelected && (
@@ -342,7 +343,7 @@ export default function ProjectForm({ categories, skills, initialData }: Project
                   if (!skill) return null;
                   return (
                     <div key={id} className="flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-md text-xs border border-gray-200 dark:border-zinc-700">
-                      <i className={`${skill.icon} text-[10px]`}></i>
+                      <Devicon icon={skill.icon} alt={skill.name} className="w-3.5 h-3.5 object-contain" />
                       {skill.name}
                       <button type="button" onClick={() => toggleSkill(id)} className="ml-1 hover:text-red-500">
                         <X className="w-3 h-3" />

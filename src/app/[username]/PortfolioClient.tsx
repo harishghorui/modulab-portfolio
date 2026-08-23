@@ -10,6 +10,7 @@ import {
   FileDown
 } from 'lucide-react';
 import { FaGithub, FaLinkedin, FaTwitter } from 'react-icons/fa';
+import { Devicon } from '@/components/ui/Devicon';
 import Image from 'next/image';
 import ProjectDetail from '@/components/ProjectDetail';
 import { getDownloadUrl, isPdf, getOptimizedImageUrl } from '@/lib/utils';
@@ -150,13 +151,13 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
         <div className="container max-w-6xl mx-auto z-10">
           <div className="flex flex-col md:flex-row items-center gap-16 md:gap-24">
             <motion.div 
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 1, y: 0 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
               className="flex-1 text-center md:text-left order-2 md:order-1"
             >
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 1, y: 0 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.8 }}
               >
@@ -220,7 +221,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
             </motion.div>
 
             <motion.div 
-              initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
+              initial={{ opacity: 1, scale: 1, rotate: 0 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
               className="relative order-1 md:order-2"
@@ -414,7 +415,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
                     <div className="flex -space-x-3">
                       {project.techStack?.map((skill: any) => (
                         <div key={skill._id} className="group/tech relative w-10 h-10 rounded-full bg-white dark:bg-zinc-800 border-4 border-white dark:border-[#050505] p-2 shadow-sm flex items-center justify-center transition-transform hover:scale-110 hover:z-50" title={skill.name}>
-                          <i className={`${skill.icon} text-lg`}></i>
+                          <Devicon icon={skill.icon} alt={skill.name} className="w-5 h-5 object-contain" />
                           {/* Minimal Tooltip */}
                           <div className="absolute bottom-full mb-2 px-2 py-1 bg-black text-white text-[8px] font-black uppercase tracking-widest rounded opacity-0 group-hover/tech:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
                             {skill.name}
@@ -537,7 +538,11 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
                         {/* Subtle Background Glow on Hover */}
                         <div className="absolute inset-0 bg-blue-500/0 group-hover/skill:bg-blue-500/5 rounded-2xl transition-all duration-500" />
                         
-                        <i className={`${skill.icon} text-3xl md:text-4xl relative z-10 transition-all duration-500 drop-shadow-sm group-hover/skill:drop-shadow-[0_0_15px_rgba(37,99,235,0.3)]`}></i>
+                        <Devicon 
+                          icon={skill.icon} 
+                          alt={skill.name} 
+                          className="w-8 h-8 md:w-10 md:h-10 object-contain relative z-10 transition-all duration-500 drop-shadow-sm group-hover/skill:drop-shadow-[0_0_15px_rgba(37,99,235,0.3)]" 
+                        />
                         <div className="relative z-10">
                           <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 group-hover/skill:text-zinc-900 dark:group-hover/skill:text-white transition-colors">
                             {skill.name}

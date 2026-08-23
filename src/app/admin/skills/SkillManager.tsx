@@ -5,6 +5,7 @@ import { saveSkill, deleteSkill, saveSkillCategory, deleteSkillCategory } from '
 import { Plus, Trash2, Tag, Loader2, AlertCircle, Pencil, X, Brain, Search, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Devicon } from '@/components/ui/Devicon';
 
 interface Category {
   _id: string;
@@ -18,10 +19,11 @@ interface Skill {
   icon: string;
 }
 
-interface Devicon {
+interface DeviconItem {
   name: string;
   versions: {
-    font: string[];
+    svg?: string[];
+    font?: string[];
   };
 }
 
@@ -38,7 +40,7 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [devicons, setDevicons] = useState<Devicon[]>([]);
+  const [devicons, setDevicons] = useState<DeviconItem[]>([]);
   const [filteredIcons, setFilteredIcons] = useState<string[]>([]);
   const [selectedIcon, setSelectedIcon] = useState('');
   const [isColored, setIsColored] = useState(true);
@@ -72,7 +74,10 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
     const results: string[] = [];
     devicons.forEach(icon => {
       if (icon.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-        icon.versions.font.forEach(version => {
+        const versions = (icon.versions.svg && icon.versions.svg.length > 0)
+          ? icon.versions.svg
+          : (icon.versions.font || ['original']);
+        versions.forEach(version => {
           results.push(`devicon-${icon.name}-${version}`);
         });
       }
@@ -384,7 +389,7 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
                           className="w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-zinc-800 flex items-center justify-between group"
                         >
                           <div className="flex items-center gap-3">
-                            <i className={`${iconClass} text-xl colored`}></i>
+                            <Devicon icon={iconClass} className="w-5 h-5 object-contain" />
                             <span className="text-sm font-medium">{iconClass}</span>
                           </div>
                           {selectedIcon === iconClass && <Check className="w-4 h-4 text-blue-600" />}
@@ -395,9 +400,9 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
                 </div>
 
                 {/* Preview Box */}
-                <div className="w-12 h-12 rounded-lg border border-gray-200 dark:border-zinc-800 flex items-center justify-center bg-gray-50 dark:bg-zinc-800">
+                <div className="w-12 h-12 rounded-lg border border-gray-200 dark:border-zinc-800 flex items-center justify-center bg-gray-50 dark:bg-zinc-800 p-2">
                   {selectedIcon ? (
-                    <i className={`${finalIconClass} text-3xl transition-all`}></i>
+                    <Devicon icon={finalIconClass} className="w-8 h-8 object-contain transition-all" />
                   ) : (
                     <span className="text-[10px] text-gray-400 text-center px-1 leading-tight">No Icon</span>
                   )}
@@ -450,7 +455,7 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
                       <td className="px-6 py-3 font-medium">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded bg-gray-50 dark:bg-zinc-800 p-1 flex items-center justify-center border border-gray-100 dark:border-zinc-700">
-                            <i className={`${skill.icon} text-xl`}></i>
+                            <Devicon icon={skill.icon} alt={skill.name} className="w-6 h-6 object-contain" />
                           </div>
                           {skill.name}
                         </div>
