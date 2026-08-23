@@ -8,7 +8,7 @@ const SYSTEM_ROUTES = ["/admin", "/api", "/login", "/register", "/dashboard"];
 const INTERNAL_ROUTES = ["/platform", "/portfolio"];
 const STATIC_ASSETS = [".png", ".jpg", ".jpeg", ".svg", ".css", ".js", ".ico", ".webp", ".map"];
 
-export default auth(async function middleware(req) {
+export default auth(async function proxy(req) {
   const url = req.nextUrl;
   let path = url.pathname;
 
