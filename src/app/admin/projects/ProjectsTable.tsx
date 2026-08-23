@@ -14,6 +14,7 @@ import { deleteProject } from './actions';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { getOptimizedImageUrl } from '@/lib/cloudinary';
+import { formatDate } from '@/lib/utils';
 
 interface Project {
   _id: string;
@@ -134,11 +135,7 @@ export default function ProjectsTable({ initialProjects }: ProjectsTableProps) {
                       )}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(project.createdAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
+                      {formatDate(project.createdAt)}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">

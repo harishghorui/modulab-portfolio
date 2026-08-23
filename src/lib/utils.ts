@@ -25,5 +25,16 @@ export function isPdf(url: string) {
   return baseUrl.toLowerCase().endsWith('.pdf');
 }
 
+export function formatDate(date: string | number | Date, options?: Intl.DateTimeFormatOptions) {
+  if (!date) return '';
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+    ...options,
+  });
+}
+
 export { getOptimizedImageUrl } from './cloudinary';
 
