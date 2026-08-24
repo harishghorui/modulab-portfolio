@@ -1,6 +1,6 @@
 # Modulab System Architecture
 
-> **System Overview**: Comprehensive documentation of the Modulab platform, current product boundaries, domain routing, data ownership, authentication boundaries, and the planned evolution strategy.
+> **System Overview**: Comprehensive documentation of the Modulab platform, current product boundaries, domain routing, data ownership, write isolation rules, authentication boundaries, and the planned evolution strategy.
 
 ---
 
@@ -112,7 +112,7 @@ flowchart TD
 
 ---
 
-## 4. Data Ownership & Schema Architecture
+## 4. Data Ownership & Write Isolation Rules
 
 All persistence is managed in MongoDB via Mongoose schemas under [`src/models/`](file:///home/harish/Harish/Git/Modulab/src/models/).
 
@@ -184,14 +184,95 @@ erDiagram
     }
 ```
 
-### Data Isolation & Ownership Rules
-1. **User Identity Boundary**: The [`User`](file:///home/harish/Harish/Git/Modulab/src/models/User.ts) model acts as the tenant root. `username` is unique across the entire platform.
-2. **Tenant Scoping**: All operational entities (`Project`, `Skill`, `Profile`, `Category`, `SkillCategory`) store a mandatory `userId` foreign key. Every database query in Server Actions and Route Handlers scopes strictly by `session.user.id`.
-3. **Reserved Namespaces**: Usernames matching system routes (`admin`, `api`, `login`, `register`, `dashboard`, `portfolio`, `platform`) are strictly rejected during registration to prevent route hijacking on `dev.modulab.online/[username]`.
+### 4.1 Data Ownership Matrix
+
+| Model | Exclusively Owned By | Allowed Writers | Allowed Direct Readers | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| [`User`](file:///home/harish/Harish/Git/Modulab/src/models/User.ts) | **Identity & Authentication** | Identity Domain only (`/api/register`, `updateUserIdentity`) | Identity Domain (`auth.ts`, `updateUserIdentity`) | Tenant Root Entity |
+| [`Profile`](file:///home/harish/Harish/Git/Modulab/src/models/Profile.ts) | **Developer Profile** | Profile Domain only (`profile/actions.ts`) | Profile Domain, Public Portfolio Renderer | Tenant Personalization |
+| [`Project`](file:///home/harish/Harish/Git/Modulab/src/models/Project.ts) | **Portfolio Content CMS** | Portfolio CMS only (`projects/actions.ts`) | Portfolio CMS, Public Portfolio Renderer | Showcase Item |
+| [`Skill`](file:///home/harish/Harish/Git/Modulab/src/models/Skill.ts) | **Portfolio Content CMS** | Portfolio CMS only (`skills/actions.ts`) | Portfolio CMS, Public Portfolio Renderer | Technology Matrix |
+| [`SkillCategory`](file:///home/harish/Harish/Git/Modulab/src/models/SkillCategory.ts) | **Portfolio Content CMS** | Portfolio CMS only (`skills/actions.ts`) | Portfolio CMS, Public Portfolio Renderer | Skill Grouping |
+| [`Category`](file:///home/harish/Harish/Git/Modulab/src/models/Category.ts) | **Portfolio Content CMS** | Portfolio CMS only (`categories/actions.ts`) | Portfolio CMS, Public Portfolio Renderer | Project Taxonomy |
+
+### 4.2 Write Isolation & Cross-Domain Mutation Rules
+
+1. **Strict Single-Writer Rule**: Every Mongoose model has exactly **one** owning domain. Only code located within the owning domain may execute mutations (`save()`, `create()`, `findOneAndUpdate()`, `findByIdAndUpdate()`, `deleteOne()`, `findOneAndDelete()`) on that model.
+2. **User Model Write Isolation**:
+   - The [`User`](file:///home/harish/Harish/Git/Modulab/src/models/User.ts) model is exclusively owned by **Identity & Authentication**.
+   - **NO other domain** (including Developer Profile or Portfolio CMS) may directly import or mutate the `User` model.
+   - Any profile-initiated identity update (e.g. updating `firstName`, `lastName`, or `username`) must call an explicit in-process domain boundary helper: [`src/lib/domains/identity/updateUserIdentity.ts`](file:///home/harish/Harish/Git/Modulab/src/lib/domains/identity/updateUserIdentity.ts).
+3. **Public Engine Read-Only Invariant**: The **Public Portfolio Delivery Engine** (`src/app/[username]/`) is strictly read-only and owns zero persistent models.
+4. **Media Supporting Role**: The **Media & Asset Pipeline** owns all direct interactions with Cloudinary SDKs and APIs. Domain Server Actions interact with media via dedicated helpers.
+5. **Cross-Domain Communication Principle**: In the Phase 1.5 modular monolith, cross-domain interactions MUST pass through formal domain boundary modules under `src/lib/domains/<domain>/` rather than directly importing another domain's Mongoose model.
 
 ---
 
-## 5. Authentication & Authorization Boundary
+## 5. Domain Boundary Inventory
+
+```mermaid
+graph TD
+    PlatformGateway["1. Platform Gateway<br/>(modulab.online)"]
+    IdentityDomain["2. Identity & Authentication<br/>(/api/register, auth.ts, User)"]
+    ProfileDomain["3. Developer Profile<br/>(/admin/profile, Profile)"]
+    CMSDomain["4. Portfolio Content CMS<br/>(/admin/*, Project, Skill, Category)"]
+    PublicDelivery["5. Public Portfolio Delivery<br/>(dev.modulab.online/:username)"]
+    MediaPipeline["6. Media & Asset Pipeline<br/>(Cloudinary, /api/download)"]
+
+    PlatformGateway -.->|External Nav Link| PublicDelivery
+    ProfileDomain -->|Calls updateUserIdentity| IdentityDomain
+    ProfileDomain --> MediaPipeline
+    CMSDomain --> MediaPipeline
+    PublicDelivery --> IdentityDomain
+    PublicDelivery --> ProfileDomain
+    PublicDelivery --> CMSDomain
+```
+
+### 1. Platform Gateway Domain
+* **Responsibility**: Parent brand identity, ecosystem presentation, product directory, marketing landing.
+* **Owned Models / Data**: None (Stateless).
+* **Allowed Dependencies**: Shared UI components ([`src/components/ui/*`](file:///home/harish/Harish/Git/Modulab/src/components/ui)), styling utilities ([`src/lib/utils.ts`](file:///home/harish/Harish/Git/Modulab/src/lib/utils.ts)).
+* **Prohibited Dependencies**: Database connections, domain models, Server Actions, CMS internals.
+* **Future Extraction Target**: Standalone Edge Static Site (`apps/platform` in Monorepo or static CDN deployment).
+
+### 2. Identity & Authentication Domain
+* **Responsibility**: User identity, credential registration, password hashing, JWT minting/verification, username reservation, tenant root security.
+* **Owned Models / Data**: [`User`](file:///home/harish/Harish/Git/Modulab/src/models/User.ts) model (`users` collection).
+* **Allowed Dependencies**: [`src/lib/db.ts`](file:///home/harish/Harish/Git/Modulab/src/lib/db.ts), `bcryptjs`, `next-auth`.
+* **Prohibited Dependencies**: Profile model, Project model, Skill model, Cloudinary SDK.
+* **Future Extraction Target**: `identity-service` (OAuth2 / OIDC SSO Service).
+
+### 3. Developer Profile Domain
+* **Responsibility**: Developer bio, professional headline, avatar, resume lifecycle, social profiles.
+* **Owned Models / Data**: [`Profile`](file:///home/harish/Harish/Git/Modulab/src/models/Profile.ts) model (`profiles` collection).
+* **Allowed Dependencies**: Identity domain helper (`updateUserIdentity`), Media domain utilities, shared UI.
+* **Prohibited Dependencies**: Direct `User` model imports, direct Project/Skill/Category mutations.
+* **Future Extraction Target**: `profile-service` (or merged into `portfolio-service`).
+
+### 4. Portfolio Content Management Domain (Portfolio Studio / CMS)
+* **Responsibility**: Portfolio project authoring, category taxonomy, skill matrix, rich-text curation, dashboard metrics.
+* **Owned Models / Data**: [`Project`](file:///home/harish/Harish/Git/Modulab/src/models/Project.ts), [`Category`](file:///home/harish/Harish/Git/Modulab/src/models/Category.ts), [`Skill`](file:///home/harish/Harish/Git/Modulab/src/models/Skill.ts), [`SkillCategory`](file:///home/harish/Harish/Git/Modulab/src/models/SkillCategory.ts).
+* **Allowed Dependencies**: Identity session (`session.user.id`), Media pipeline, shared UI, rich-text components.
+* **Prohibited Dependencies**: Direct `User` mutations, Direct `Profile` mutations.
+* **Future Extraction Target**: `portfolio-service` (Core Portfolio CMS Service).
+
+### 5. Public Portfolio Delivery Domain
+* **Responsibility**: High-speed public rendering of tenant portfolios, dynamic SEO/OpenGraph metadata generation, client-side project filtering, sanitized HTML display.
+* **Owned Models / Data**: None (Pure Read Model / Projection).
+* **Allowed Dependencies**: Read-only access to Identity, Profile, and Portfolio CMS data; `DOMPurify`; UI components.
+* **Prohibited Dependencies**: Any write/mutation operations, Server Actions, auth modification.
+* **Future Extraction Target**: `portfolio-renderer` (Edge SSR / Static Rendering Micro-Frontend).
+
+### 6. Media & Asset Pipeline (Technical Capability Domain)
+* **Responsibility**: Cloudinary folder hierarchization (`Modulab/{username}/{category}`), dynamic transformation URLs (`getOptimizedImageUrl`), authorized signed download streaming for attachments (`/api/download`).
+* **Owned Models / Data**: Cloudinary storage namespaces and delivery configurations.
+* **Allowed Dependencies**: Cloudinary Node SDK, `src/lib/utils.ts`.
+* **Prohibited Dependencies**: Application database models, domain business rules.
+* **Future Extraction Target**: `media-service` (Presigned Upload & Asset Processing Service).
+
+---
+
+## 6. Authentication & Authorization Boundary
 
 ```mermaid
 sequenceDiagram
@@ -222,16 +303,18 @@ sequenceDiagram
 
 ---
 
-## 6. Planned Architectural Evolution
+## 7. Planned Architectural Evolution
 
 ```mermaid
 flowchart TD
-    subgraph Phase1["Phase 1: Modular Monolith (Current Architecture)"]
+    subgraph Phase1["Phase 1 & 1.5: Modular Monolith (Current Architecture)"]
         MonoApp["Next.js 16 Application<br/>(Single Deployment)"]
         MonoApp --> M1["modulab.online (Platform Gateway)"]
         MonoApp --> M2["dev.modulab.online (Portfolio CMS & Tenant Portfolios)"]
         MonoDB[("Single MongoDB Database")]
         MonoApp --> MonoDB
+        MonoDomainBoundary["Formal Domain Boundaries (src/lib/domains/*)"]
+        MonoApp --> MonoDomainBoundary
     end
 
     subgraph Phase2["Phase 2: Multi-Product Monorepo (Trigger: Product #2 Launch)"]
@@ -265,15 +348,16 @@ flowchart TD
 
 | Stage | Topology | Operational Model | Trigger Condition |
 | :--- | :--- | :--- | :--- |
-| **Phase 1 (Current)** | **Modular Monolith** | Single Next.js 16 repo, single database, edge proxy routing | Current baseline (1 platform gateway + 1 product). Minimal operational overhead. |
+| **Phase 1 & 1.5 (Current)** | **Modular Monolith** | Single Next.js 16 repo, single database, in-process domain boundary helpers (`src/lib/domains/*`) | Current baseline (1 platform gateway + 1 product). Minimal operational overhead. |
 | **Phase 2 (Planned)** | **Multi-Product Monorepo** | Turborepo workspace separating apps (`platform`, `portfolio`, `docs`) while sharing packages (`db`, `auth`, `ui`) | When a **second distinct product module** is added to the Modulab ecosystem. |
 | **Phase 3 (Future)** | **Microservices Ecosystem** | Distributed independently deployable services behind an API Gateway with dedicated databases | When individual services require independent scaling, distinct technology stacks, or separate team deployment lifecycles. |
 
 ---
 
-## 7. Architectural Constraints & Invariants
+## 8. Architectural Constraints & Invariants
 
 1. **Subdomain Independence**: Public user portfolios must remain served at `dev.modulab.online/[username]` without path prefix collisions.
 2. **Deterministic Hydration**: All dates rendered across server and client components must format with explicit `timeZone: 'UTC'` using [`formatDate`](file:///home/harish/Harish/Git/Modulab/src/lib/utils.ts#L28-L37).
 3. **Data Integrity**: Database model names (`User`, `Profile`, `Project`, `Skill`, `Category`, `SkillCategory`) and Cloudinary storage paths (`Modulab/...`) must remain stable to prevent breaking existing data.
 4. **Standard API Response Format**: All route handlers and server actions must conform to `{ success: boolean, data?: any, error?: string }`.
+5. **Ownership Precedes Extraction**: A future service may only own data and mutations that already have a clearly established, isolated owner in the modular monolith.

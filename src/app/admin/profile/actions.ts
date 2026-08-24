@@ -3,7 +3,7 @@
 import { auth } from '@/auth';
 import dbConnect from '@/lib/db';
 import Profile from '@/models/Profile';
-import User from '@/models/User';
+import { updateUserIdentity, checkUsernameAvailability as checkIdentityUsernameAvailability } from '@/lib/domains/identity';
 import { revalidatePath } from 'next/cache';
 import { v2 as cloudinary } from 'cloudinary';
 import { getCloudinaryPath } from '@/lib/cloudinary';
@@ -41,21 +41,17 @@ export async function updateProfile(prevState: any, formData: FormData) {
   };
 
   try {
-    // 1. Update User
-    const existingUserWithUsername = await User.findOne({ 
-      username: username.toLowerCase(), 
-      _id: { $ne: session.user.id } 
-    });
-    
-    if (existingUserWithUsername) {
-      return { error: 'Username is already taken' };
-    }
-
-    await User.findByIdAndUpdate(session.user.id, {
+    // 1. Update User via Identity Domain boundary
+    const identityResult = await updateUserIdentity({
+      userId: session.user.id,
       firstName,
       lastName,
-      username: username.toLowerCase(),
+      username,
     });
+
+    if (!identityResult.success) {
+      return { error: identityResult.error || 'Failed to update user identity' };
+    }
 
     // 2. Handle Cloudinary Uploads
     let imageUrl = '';
@@ -150,11 +146,6 @@ export async function checkUsernameAvailability(username: string) {
   const session = await auth();
   if (!session?.user?.id) return { available: false };
 
-  await dbConnect();
-  const existingUser = await User.findOne({ 
-    username: username.toLowerCase(), 
-    _id: { $ne: session.user.id } 
-  });
-  
-  return { available: !existingUser };
+  const isAvailable = await checkIdentityUsernameAvailability(username, session.user.id);
+  return { available: isAvailable };
 }

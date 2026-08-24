@@ -136,3 +136,39 @@ Created a centralized formatting utility [`formatDate`](file:///home/harish/Hari
 ### Consequences
 * **Positive**: Completely eliminates hydration mismatches across all geographical timezones without resorting to `suppressHydrationWarning` or client-only mounting workarounds.
 * **Negative**: Displayed dates reflect UTC calendar dates rather than the user's localized midnight offset.
+
+---
+
+## ADR-008: Formalization of Logical Business Domain Boundaries
+
+### Status
+**Accepted**
+
+### Context
+In Phase 1.5, we conducted a domain boundary audit to prepare Modulab for eventual multi-product expansion. We identified that although the application operates as a single modular monolith, code in some modules (such as Profile management) was directly mutating models owned by other domains (such as Identity's `User` model).
+
+If left undisciplined, cross-domain direct imports create spaghetti dependencies that make future extraction into monorepo packages or microservices difficult and error-prone.
+
+### Core Principle
+> **"Ownership precedes extraction."**  
+> A future microservice or package may only own data and mutations that already have a clearly established, isolated owner in the modular monolith. We do not extract code to fix broken boundaries; we establish clean boundaries first, and extract only when scale or business drivers demand it.
+
+### Decision
+1. **Establish Strict Domain Boundaries**: Formally categorize the codebase into 6 distinct logical domains:
+   - Platform Gateway
+   - Identity & Authentication
+   - Developer Profile
+   - Portfolio Content Management (CMS)
+   - Public Portfolio Delivery Engine
+   - Media & Asset Pipeline
+2. **Enforce Single-Writer Rule**: Every Mongoose model has exactly one owning domain. Direct write operations (`findByIdAndUpdate`, `save`, `deleteOne`) on a model from outside its owning domain are strictly prohibited.
+3. **Introduce In-Process Domain Boundary Helpers**: Cross-domain mutations must be executed through explicit domain helper functions located under `src/lib/domains/<domain>/` (e.g., [`src/lib/domains/identity/updateUserIdentity.ts`](file:///home/harish/Harish/Git/Modulab/src/lib/domains/identity/updateUserIdentity.ts)).
+4. **Decouple Profile from User Model**: Refactored [`src/app/admin/profile/actions.ts`](file:///home/harish/Harish/Git/Modulab/src/app/admin/profile/actions.ts) and [`src/app/admin/profile/page.tsx`](file:///home/harish/Harish/Git/Modulab/src/app/admin/profile/page.tsx) so that profile workflows interact with User identity through `updateUserIdentity` and `getUserIdentity` rather than directly importing the `User` Mongoose model.
+
+### Consequences
+* **Positive**:
+  - Enforces explicit contract boundaries in-process with zero network overhead.
+  - Guarantees that replacing an in-process helper with an HTTP/gRPC client in Phase 2 or Phase 3 will require zero changes to the calling domain's business logic.
+  - Eliminates accidental side effects across tenant identity and portfolio profile states.
+* **Negative**:
+  - Requires developers to define and maintain domain helper interfaces rather than writing inline Mongoose queries across modules.
