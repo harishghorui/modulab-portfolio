@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { FaGithub, FaLinkedin, FaTwitter } from 'react-icons/fa';
 import { cn, isPdf } from '@/lib/utils';
+import { uploadDirectToMediaProvider } from '@/lib/domains/media/client';
 import { toast } from 'sonner';
 
 interface ProfileFormProps {
@@ -32,11 +33,13 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
   const [state, formAction, isPending] = useActionState(updateProfile, initialState);
   
   const [imagePreview, setImagePreview] = useState<string>(initialData?.image || '');
-  const [imageBase64, setImageBase64] = useState<string>(initialData?.image || '');
+  const [imageUrl, setImageUrl] = useState<string>(initialData?.image || '');
+  const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
   
   const [resumePreview, setResumePreview] = useState<string>(initialData?.resumeUrl || '');
-  const [resumeBase64, setResumeBase64] = useState<string>(initialData?.resumeUrl || '');
+  const [resumeUrl, setResumeUrl] = useState<string>(initialData?.resumeUrl || '');
   const [resumeFileName, setResumeFileName] = useState<string>('');
+  const [isUploadingResume, setIsUploadingResume] = useState<boolean>(false);
 
   const [username, setUsername] = useState(userData?.username || '');
   const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
@@ -66,16 +69,6 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
   useEffect(() => {
     if (state?.success) {
       toast.success('Profile updated successfully!');
-      
-      // Update local previews with the new URLs from props after refresh
-      if (imageBase64.startsWith('data:')) {
-        setImageBase64(imagePreview); 
-      }
-      if (resumeBase64.startsWith('data:')) {
-        setResumeBase64('stored'); 
-        setResumeFileName(''); 
-      }
-      
       router.refresh();
     }
     if (state?.error) {
@@ -83,51 +76,92 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
     }
   }, [state, router]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'resume') => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`${type === 'image' ? 'Image' : 'Resume'} file size must be less than 5MB`);
-        return;
-      }
+    if (!file) return;
 
-      if (type === 'resume') {
-        const allowedTypes = [
-          'application/pdf', 
-          'application/msword', 
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        ];
-        if (!allowedTypes.includes(file.type)) {
-          toast.error('Resume must be a PDF or Word document');
-          return;
-        }
-      }
+    if (!file.type.startsWith('image/')) {
+      toast.error('Selected file must be an image.');
+      return;
+    }
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        if (type === 'image') {
-          setImagePreview(result);
-          setImageBase64(result);
-        } else {
-          setResumePreview(result);
-          setResumeBase64(result);
-          setResumeFileName(file.name);
-        }
-      };
-      reader.readAsDataURL(file);
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image file size must be less than 5MB');
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setImagePreview(objectUrl);
+    setIsUploadingImage(true);
+
+    try {
+      const result = await uploadDirectToMediaProvider(file, 'profile-avatar');
+      setImageUrl(result.secureUrl);
+      toast.success('Profile image uploaded successfully');
+    } catch (err: any) {
+      console.error('Avatar direct upload failed:', err);
+      toast.error(err.message || 'Failed to upload profile image');
+      setImagePreview(initialData?.image || '');
+      setImageUrl(initialData?.image || '');
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
-  const clearFile = (type: 'image' | 'resume') => {
-    if (type === 'image') {
-      setImagePreview('');
-      setImageBase64('');
-    } else {
-      setResumePreview('');
-      setResumeBase64('');
-      setResumeFileName('');
+  const clearImage = () => {
+    setImagePreview('');
+    setImageUrl('');
+  };
+
+  const handleResumeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Resume file size must be less than 5MB');
+      return;
     }
+
+    const allowedExtensions = ['.pdf', '.doc', '.docx'];
+    const lowerFileName = file.name.toLowerCase();
+    const isAllowedExt = allowedExtensions.some(ext => lowerFileName.endsWith(ext));
+
+    const allowedMimeTypes = [
+      'application/pdf', 
+      'application/msword', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+
+    if (!isAllowedExt && !allowedMimeTypes.includes(file.type)) {
+      toast.error('Resume must be a PDF or Word document (.pdf, .doc, .docx)');
+      return;
+    }
+
+    setResumeFileName(file.name);
+    setIsUploadingResume(true);
+    // Show immediate progress preview
+    setResumePreview('uploading');
+
+    try {
+      const result = await uploadDirectToMediaProvider(file, 'resume');
+      setResumeUrl(result.secureUrl);
+      setResumePreview(result.secureUrl);
+      toast.success('Resume uploaded successfully');
+    } catch (err: any) {
+      console.error('Resume direct upload failed:', err);
+      toast.error(err.message || 'Failed to upload resume document');
+      setResumeUrl(initialData?.resumeUrl || '');
+      setResumePreview(initialData?.resumeUrl || '');
+      setResumeFileName('');
+    } finally {
+      setIsUploadingResume(false);
+    }
+  };
+
+  const clearResume = () => {
+    setResumePreview('');
+    setResumeUrl('');
+    setResumeFileName('');
   };
 
   const handleDownload = async () => {
@@ -183,7 +217,7 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
         {/* User Account Info */}
         <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-6">
           <h2 className="text-xl font-semibold flex items-center gap-2 border-b border-gray-100 dark:border-zinc-800 pb-4">
-            <User className="w-5 h-5 text-gray-400" />
+            <User className="w-5 h-4 text-gray-400" />
             Account Information
           </h2>
           
@@ -200,8 +234,9 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => handleFileChange(e, 'image')}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      onChange={handleImageChange}
+                      disabled={isUploadingImage || isUploadingResume}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
                     />
                     <Upload className="w-6 h-6 text-gray-400 group-hover:text-blue-500 transition-colors" />
                     <p className="mt-1 text-[10px] text-gray-500 text-center px-2">Click to upload</p>
@@ -211,31 +246,38 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                     <img 
                       src={imagePreview} 
                       alt="Profile Preview" 
-                      className="w-full h-full object-cover" 
+                      className={cn("w-full h-full object-cover", isUploadingImage && "opacity-50")} 
                       referrerPolicy="no-referrer"
                     />
-                    {/* Overlay for Change/Remove */}
-                    <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="relative cursor-pointer mb-2">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileChange(e, 'image')}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                        />
-                        <span className="text-[10px] text-white font-bold uppercase tracking-wider bg-blue-600 px-2 py-1 rounded">Change</span>
+                    {isUploadingImage ? (
+                      <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white gap-1">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span className="text-[9px] font-bold">Uploading...</span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => clearFile('image')}
-                        className="text-[10px] text-white font-bold uppercase tracking-wider bg-red-600 px-2 py-1 rounded hover:bg-red-700 transition-colors"
-                      >
-                        Remove
-                      </button>
-                    </div>
+                    ) : (
+                      /* Overlay for Change/Remove */
+                      <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="relative cursor-pointer mb-2">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                          />
+                          <span className="text-[10px] text-white font-bold uppercase tracking-wider bg-blue-600 px-2 py-1 rounded">Change</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={clearImage}
+                          className="text-[10px] text-white font-bold uppercase tracking-wider bg-red-600 px-2 py-1 rounded hover:bg-red-700 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
-                <input type="hidden" name="image" value={imageBase64} />
+                <input type="hidden" name="image" value={imageUrl} />
               </div>
             </div>
 
@@ -349,7 +391,7 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
               />
             </div>
 
-            {/* Resume Upload - Now as a specialized field in Basic Info */}
+            {/* Resume Upload - Direct Browser Upload */}
             <div className="space-y-2">
               <label className="text-sm font-semibold flex items-center gap-2">
                 <FileDown className="w-4 h-4 text-gray-500" />
@@ -361,8 +403,9 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                     <input
                       type="file"
                       accept=".pdf,.doc,.docx"
-                      onChange={(e) => handleFileChange(e, 'resume')}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={handleResumeChange}
+                      disabled={isUploadingResume || isUploadingImage}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                     />
                     <FileText className="w-8 h-8 text-gray-400 group-hover:text-blue-500 transition-colors" />
                     <p className="mt-2 text-sm text-gray-500 text-center">Click to upload resume (Max 5MB)</p>
@@ -371,19 +414,23 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                   <div className="relative bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 p-6 rounded-xl flex items-center justify-between gap-3 h-24 shadow-sm">
                     <div className="flex items-center gap-4">
                       <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                        <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                        {isUploadingResume ? (
+                          <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
+                        ) : (
+                          <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                        )}
                       </div>
                       <div>
                         <p className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[200px]">
-                          {resumeBase64.startsWith('data:') ? (resumeFileName || 'New Resume Selected') : 'Resume Uploaded'}
+                          {isUploadingResume ? (resumeFileName || 'Uploading resume...') : (resumeFileName || 'Resume Uploaded')}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {resumeBase64.startsWith('data:') ? 'Ready to upload' : 'Stored on Cloud'}
+                          {isUploadingResume ? 'Uploading directly to Cloudinary...' : 'Stored on Cloud'}
                         </p>
                       </div>
                     </div>
-                      <div className="flex gap-4">
-                      {resumePreview.startsWith('http') && (
+                    <div className="flex gap-4">
+                      {!isUploadingResume && resumePreview.startsWith('http') && (
                         <button
                           type="button"
                           onClick={handleDownload}
@@ -392,17 +439,19 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                           Download
                         </button>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => clearFile('resume')}
-                        className="px-4 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors"
-                      >
-                        Change
-                      </button>
+                      {!isUploadingResume && (
+                        <button
+                          type="button"
+                          onClick={clearResume}
+                          className="px-4 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors"
+                        >
+                          Change
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
-                <input type="hidden" name="resumeUrl" value={resumeBase64} />
+                <input type="hidden" name="resumeUrl" value={resumeUrl} />
               </div>
             </div>
           </div>
@@ -477,13 +526,13 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
         <div className="flex justify-end">
           <button
             type="submit"
-            disabled={isPending || isUsernameAvailable === false}
+            disabled={isPending || isUploadingImage || isUploadingResume || isUsernameAvailable === false}
             className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-all flex items-center justify-center gap-2 min-w-[200px]"
           >
-            {isPending ? (
+            {isPending || isUploadingImage || isUploadingResume ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Saving...
+                {isUploadingResume ? 'Uploading Resume...' : isUploadingImage ? 'Uploading Image...' : 'Saving...'}
               </>
             ) : (
               <>

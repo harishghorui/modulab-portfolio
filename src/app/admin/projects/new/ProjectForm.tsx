@@ -21,6 +21,7 @@ import {
 import { FaGithub } from 'react-icons/fa';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { uploadDirectToMediaProvider } from '@/lib/domains/media/client';
 import RichTextEditor from '@/components/admin/RichTextEditor';
 import { toast } from 'sonner';
 import { Devicon } from '@/components/ui/Devicon';
@@ -41,8 +42,9 @@ export default function ProjectForm({ categories, skills, initialData }: Project
   const [state, formAction, isPending] = useActionState(action, initialState);
   const [localError, setLocalError] = useState<string | null>(null);
   
-  const [base64Image, setBase64Image] = useState<string>(initialData?.image || '');
+  const [imageUrl, setImageUrl] = useState<string>(initialData?.image || '');
   const [preview, setPreview] = useState<string>(initialData?.image || '');
+  const [isUploading, setIsUploading] = useState<boolean>(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>(initialData?.techStack || []);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialData?.category || []);
   const [searchQuery, setSearchQuery] = useState('');
@@ -56,19 +58,20 @@ export default function ProjectForm({ categories, skills, initialData }: Project
     }
   }, [state]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    // Form action handles the actual submission, 
-    // but we can do a quick check here to prevent hitting the API if fields are missing.
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     setLocalError(null);
     
     let hasError = false;
-    if (selectedCategories.length === 0) {
+    if (isUploading) {
+      setLocalError('Image is still uploading. Please wait a moment.');
+      hasError = true;
+    } else if (selectedCategories.length === 0) {
       setLocalError('Please select at least one category.');
       hasError = true;
     } else if (selectedSkills.length === 0) {
       setLocalError('Please select at least one skill for the tech stack.');
       hasError = true;
-    } else if (!base64Image) {
+    } else if (!imageUrl) {
       setLocalError('Project image is required.');
       hasError = true;
     } else if (!description || description === '<p></p>') {
@@ -106,21 +109,40 @@ export default function ProjectForm({ categories, skills, initialData }: Project
     cat.name.toLowerCase().includes(catSearchQuery.toLowerCase())
   );
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setBase64Image(result);
-        setPreview(result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setLocalError('Selected file must be an image.');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setLocalError('Image file size must be under 10MB.');
+      return;
+    }
+
+    setLocalError(null);
+    setPreview(URL.createObjectURL(file));
+    setIsUploading(true);
+
+    try {
+      const result = await uploadDirectToMediaProvider(file, 'project-thumbnail');
+      setImageUrl(result.secureUrl);
+      toast.success('Image uploaded successfully');
+    } catch (err: any) {
+      console.error('Direct upload failed:', err);
+      setLocalError(err.message || 'Failed to upload image to media provider');
+      setPreview(initialData?.image || '');
+      setImageUrl(initialData?.image || '');
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const clearImage = () => {
-    setBase64Image('');
+    setImageUrl('');
     setPreview('');
   };
 
@@ -253,8 +275,9 @@ export default function ProjectForm({ categories, skills, initialData }: Project
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    required={!isEdit}
+                    disabled={isUploading}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                    required={!isEdit && !imageUrl}
                   />
                   <Upload className="w-8 h-8 text-gray-400 group-hover:text-blue-500 transition-colors" />
                   <p className="mt-2 text-sm text-gray-500">Click or drag to upload</p>
@@ -264,19 +287,26 @@ export default function ProjectForm({ categories, skills, initialData }: Project
                   <img 
                     src={preview} 
                     alt="Preview" 
-                    className="w-full h-full object-cover" 
+                    className={cn("w-full h-full object-cover", isUploading && "opacity-50")}
                     referrerPolicy="no-referrer"
                   />
-                  <button
-                    type="button"
-                    onClick={clearImage}
-                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                  {isUploading ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white gap-2">
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                      <span className="text-xs font-medium">Uploading to cloud...</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={clearImage}
+                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               )}
-              <input type="hidden" name="image" value={base64Image} />
+              <input type="hidden" name="image" value={imageUrl} />
             </div>
           </div>
 
@@ -434,13 +464,13 @@ export default function ProjectForm({ categories, skills, initialData }: Project
         <div className="pt-4 flex gap-4">
           <button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || isUploading}
             className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
           >
-            {isPending ? (
+            {isPending || isUploading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                {isEdit ? 'Updating...' : 'Creating...'}
+                {isUploading ? 'Uploading Image...' : isEdit ? 'Updating...' : 'Creating...'}
               </>
             ) : (
               <>

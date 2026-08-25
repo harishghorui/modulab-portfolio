@@ -13,7 +13,7 @@ import {
 import { deleteProject } from './actions';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { getOptimizedImageUrl } from '@/lib/cloudinary';
+import { getOptimizedImageUrl } from '@/lib/domains/media/transform';
 import { formatDate } from '@/lib/utils';
 
 interface Project {

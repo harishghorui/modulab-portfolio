@@ -106,8 +106,8 @@ flowchart TD
 * **Purpose**: Shared authentication provider across platform and product surfaces.
 * **Implementation**: NextAuth.js v5 (`auth.ts`, `auth.config.ts`) using credentials provider with bcrypt password hashing.
 
-### 3.6 Media & Asset Delivery Pipeline (`src/lib/cloudinary.ts`, `src/app/api/download/`)
-* **Purpose**: Hierarchical Cloudinary image transformation and secure resume downloads.
+### 3.6 Media & Asset Delivery Pipeline (`src/lib/domains/media/`, `src/app/api/v1/media/presign`, `src/app/api/download/`)
+* **Purpose**: Hierarchical Cloudinary image transformation, presigned direct browser uploads, and secure resume downloads.
 * **Namespace**: `Modulab/{username}/{category}` where category is `Profile_Photos`, `Resumes`, or `Project_Images`.
 
 ---

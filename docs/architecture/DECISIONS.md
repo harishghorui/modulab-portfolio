@@ -113,7 +113,7 @@ Users upload project screenshots, profile pictures, and PDF/DOCX resumes. Raw pu
 
 ### Decision
 1. Organize Cloudinary media hierarchically: `Modulab/{username}/{category}` where category is `Profile_Photos`, `Resumes`, or `Project_Images`.
-2. Apply automatic optimization (`f_auto,q_auto,w_...`) via [`getOptimizedImageUrl`](file:///home/harish/Harish/Git/Modulab/src/lib/cloudinary.ts#L38-L81).
+2. Apply automatic optimization (`f_auto,q_auto,w_...`) via [`getOptimizedImageUrl`](file:///home/harish/Harish/Git/Modulab/src/lib/domains/media/transform.ts#L20-L60).
 3. Deliver downloadable files via [`/api/download`](file:///home/harish/Harish/Git/Modulab/src/app/api/download/route.ts), which signs Cloudinary URLs server-side and streams the binary buffer with proper `Content-Disposition` attachment headers.
 
 ### Consequences
@@ -172,3 +172,27 @@ If left undisciplined, cross-domain direct imports create spaghetti dependencies
   - Eliminates accidental side effects across tenant identity and portfolio profile states.
 * **Negative**:
   - Requires developers to define and maintain domain helper interfaces rather than writing inline Mongoose queries across modules.
+
+---
+
+## ADR-009: Presigned Direct Browser Uploads and Server Action Payload Decoupling
+
+### Status
+**Accepted**
+
+### Context
+Previous implementations transported multi-megabyte Base64 data strings through Next.js Server Actions for project thumbnails, profile avatars, and resumes. This created memory spikes on the application server, increased server action latency, and tightly coupled business actions to provider upload routines.
+
+### Decision
+1. **Presigned Upload Authorization (`POST /api/v1/media/presign`)**: The browser requests an upload signature specifying an authorized purpose (`project-thumbnail`, `profile-avatar`, `resume`). The server derives the target folder (`Modulab/{username}/{category}`) strictly from authenticated session state and returns a short-lived HMAC signature without exposing `CLOUDINARY_API_SECRET`.
+2. **Direct Browser Upload**: The browser uploads the binary directly to Cloudinary via multipart POST (`uploadDirectToMediaProvider`) and receives the resulting `secure_url`.
+3. **Asset Reference Validation**: Server Actions receive only the sanitized URL string and validate it against the authenticated user namespace via `validateAssetReference()` before persisting to MongoDB.
+4. **Legacy Upload Cleanup**: Removed all Base64 / `FileReader` routines and server-side upload functions (`uploadProfilePhoto`, `uploadProjectThumbnail`, `uploadResumeDocument`).
+
+### Consequences
+* **Positive**:
+  - Server Action payloads reduced from multi-megabyte Base64 strings to lightweight (<1KB) text references.
+  - Eliminates image buffering on application servers.
+  - Enforces strict multi-tenant namespace isolation at both signature generation and action validation stages.
+* **Negative**:
+  - If a user uploads an image but abandons the form before saving, the asset exists in Cloudinary without a referencing MongoDB record (reconcilable via periodic cleanup).

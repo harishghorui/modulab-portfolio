@@ -72,8 +72,8 @@ flowchart LR
 
 | Calling Location | Allowed Imports | Prohibited Imports |
 | :--- | :--- | :--- |
-| **`src/app/admin/profile/*`** | • `@/models/Profile`<br/>• `@/lib/domains/identity` (`updateUserIdentity`, `getUserIdentity`)<br/>• `@/lib/cloudinary` (URL helpers)<br/>• `@/lib/utils` | ❌ `import User from '@/models/User'` *(Prohibited)*<br/>❌ Direct writes to `User` collection |
-| **`src/app/admin/projects/*`** | • `@/models/Project`<br/>• `@/models/Category`<br/>• `@/models/Skill`<br/>• `@/lib/cloudinary`<br/>• `@/lib/utils` | ❌ `@/models/User`<br/>❌ `@/models/Profile`<br/>❌ Direct mutations to non-CMS models |
+| **`src/app/admin/profile/*`** | • `@/models/Profile`<br/>• `@/lib/domains/identity` (`updateUserIdentity`, `getUserIdentity`)<br/>• `@/lib/domains/media` / `@/lib/domains/media/client`<br/>• `@/lib/utils` | ❌ `import User from '@/models/User'` *(Prohibited)*<br/>❌ Direct writes to `User` collection |
+| **`src/app/admin/projects/*`** | • `@/models/Project`<br/>• `@/models/Category`<br/>• `@/models/Skill`<br/>• `@/lib/domains/media` / `@/lib/domains/media/client`<br/>• `@/lib/utils` | ❌ `@/models/User`<br/>❌ `@/models/Profile`<br/>❌ Direct mutations to non-CMS models |
 | **`src/app/admin/skills/*`** | • `@/models/Skill`<br/>• `@/models/SkillCategory`<br/>• `@/lib/devicon`<br/>• `@/lib/utils` | ❌ `@/models/User`<br/>❌ `@/models/Project`<br/>❌ `@/models/Profile` |
 | **`src/app/admin/categories/*`** | • `@/models/Category`<br/>• `@/lib/utils` | ❌ `@/models/User`<br/>❌ `@/models/Project` |
 | **`src/app/[username]/*`** | • Read queries on domain models<br/>• `@/lib/utils`<br/>• `DOMPurify` | ❌ Any write operation (`save`, `update`, `delete`)<br/>❌ Server Actions |
@@ -93,6 +93,9 @@ If Domain A requires an operation from Domain B:
 1. Domain B defines an exported helper function under `src/lib/domains/<domainB>/`.
 2. The helper performs validation, executes the database mutation within Domain B's scope, and returns a sanitized result `{ success: boolean, data?: any, error?: string }`.
 3. Domain A imports and invokes the helper function.
+
+### Rule 3: Direct Media Uploads & Binary Transport Decoupling
+Business domains do not transport binary media or multi-megabyte Base64 strings through Server Actions. Upload authorization is obtained from the Media domain via `POST /api/v1/media/presign` and binary assets are uploaded directly to the configured media provider from the browser. Server Actions receive and validate only the resulting asset reference.
 
 ---
 
@@ -171,7 +174,7 @@ export async function checkUsername(username: string) {
 | :--- | :---: | :--- | :--- | :--- |
 | **Platform Gateway** | **10 / 10** | None (Currently co-located in App Router) | `apps/platform` | Static CDN / Edge Rewrite |
 | **Identity & Auth** | **8.5 / 10** | In-process NextAuth session sharing | `identity-service` | `POST /api/v1/auth/register`<br/>`POST /api/v1/auth/login`<br/>`PATCH /api/v1/users/:id` |
-| **Developer Profile** | **8.0 / 10** | Base64 media upload handling in actions | `profile-service` | `GET /api/v1/profiles/:userId`<br/>`PUT /api/v1/profiles/:userId` |
-| **Portfolio CMS** | **8.0 / 10** | Base64 media upload handling in actions | `portfolio-service` | `GET /api/v1/projects`<br/>`POST /api/v1/projects`<br/>`GET /api/v1/skills` |
+| **Developer Profile** | **9.0 / 10** | In-process NextAuth session sharing | `profile-service` | `GET /api/v1/profiles/:userId`<br/>`PUT /api/v1/profiles/:userId` |
+| **Portfolio CMS** | **9.0 / 10** | In-process NextAuth session sharing | `portfolio-service` | `GET /api/v1/projects`<br/>`POST /api/v1/projects`<br/>`GET /api/v1/skills` |
 | **Public Delivery** | **8.0 / 10** | Direct Mongoose read queries in page.tsx | `portfolio-renderer` | Consumes `GET /api/v1/public/portfolios/:username` |
-| **Media Pipeline** | **7.5 / 10** | Server Action base64 buffering | `media-service` | `POST /api/v1/media/presign`<br/>`GET /api/v1/media/download` |
+| **Media Pipeline** | **9.0 / 10** | In-process NextAuth session sharing | `media-service` | `POST /api/v1/media/presign`<br/>`GET /api/v1/media/download` |

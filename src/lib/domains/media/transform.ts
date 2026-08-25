@@ -1,34 +1,12 @@
-/**
- * Utility for Cloudinary upload paths and configurations
- */
-
-export type CloudinaryCategory = 'Profile_Photos' | 'Resumes' | 'Project_Images';
+import { ImageOptimizeOptions, MediaCategory } from './types';
 
 /**
  * Returns the hierarchical folder path for Cloudinary uploads.
  * Pattern: Modulab/{username}/{category}
  */
-export function getCloudinaryPath(username: string, category: CloudinaryCategory) {
-  // Ensure username is clean for folder names
+export function getCloudinaryPath(username: string, category: MediaCategory): string {
   const cleanUsername = username.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
   return `Modulab/${cleanUsername}/${category}`;
-}
-
-/**
- * Standard upload options for Cloudinary to ensure consistency
- */
-export const getBaseUploadOptions = (username: string, category: CloudinaryCategory) => ({
-  folder: getCloudinaryPath(username, category),
-  use_filename: true,
-  unique_filename: true,
-  overwrite: false,
-});
-
-export interface CloudinaryOptimizeOptions {
-  width?: number;
-  quality?: string | number;
-  format?: string;
-  crop?: string;
 }
 
 /**
@@ -37,12 +15,16 @@ export interface CloudinaryOptimizeOptions {
  */
 export function getOptimizedImageUrl(
   url?: string | null,
-  options?: CloudinaryOptimizeOptions
+  options?: ImageOptimizeOptions
 ): string {
   if (!url || typeof url !== 'string') return '';
 
   // If not a Cloudinary URL or if it's a raw/attachment download (e.g. resume), return untouched
-  if (!url.includes('res.cloudinary.com') || url.includes('/upload/fl_attachment') || url.includes('/raw/upload/')) {
+  if (
+    !url.includes('res.cloudinary.com') ||
+    url.includes('/upload/fl_attachment') ||
+    url.includes('/raw/upload/')
+  ) {
     return url;
   }
 
@@ -80,3 +62,18 @@ export function getOptimizedImageUrl(
   return `${prefix}${transformString}/${rest}`;
 }
 
+/**
+ * Transforms an asset URL to trigger direct browser attachment downloads.
+ */
+export function getDownloadUrl(url: string): string {
+  if (!url) return '';
+  if (url.includes('res.cloudinary.com')) {
+    // Avoid adding duplicate flags if it already exists
+    if (url.includes('fl_attachment')) return url;
+
+    // Cloudinary supports fl_attachment for both image and raw resource types
+    // It should be placed right after /upload/
+    return url.replace('/upload/', '/upload/fl_attachment/');
+  }
+  return url;
+}

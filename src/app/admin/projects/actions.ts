@@ -3,23 +3,15 @@
 import { auth } from '@/auth';
 import dbConnect from '@/lib/db';
 import Project from '@/models/Project';
+import { validateAssetReference } from '@/lib/domains/media';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { v2 as cloudinary } from 'cloudinary';
-import { getCloudinaryPath } from '@/lib/cloudinary';
 import mongoose from 'mongoose';
-
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 export async function createProject(prevState: any, formData: FormData) {
   const session = await auth();
 
-  if (!session) {
+  if (!session?.user?.username) {
     throw new Error('Unauthorized');
   }
 
@@ -53,26 +45,21 @@ export async function createProject(prevState: any, formData: FormData) {
 
   const liveLink = formData.get('liveLink') as string;
   const githubLink = formData.get('githubLink') as string;
-  const imageBase64 = formData.get('image') as string;
+  const imageUrl = (formData.get('image') as string)?.trim();
   const featured = formData.get('featured') === 'on';
 
-  let imageUrl = '';
-
-  // 1. Upload to Cloudinary first
-  if (imageBase64) {
-    try {
-      const uploadResponse = await cloudinary.uploader.upload(imageBase64, {
-        folder: getCloudinaryPath(session.user.username!, 'Project_Images'),
-        use_filename: true,
-        unique_filename: true,
-      });
-      imageUrl = uploadResponse.secure_url;
-    } catch (error: any) {
-      console.error('Cloudinary upload error:', error);
-      return { error: 'Image upload failed. Please check your cloud configuration.' };
-    }
-  } else {
+  // 1. Validate Asset Reference via Media domain boundary
+  if (!imageUrl) {
     return { error: 'Project image is required' };
+  }
+
+  const validation = validateAssetReference(imageUrl, {
+    username: session.user.username,
+    purpose: 'project-thumbnail',
+  });
+
+  if (!validation.valid) {
+    return { error: validation.error || 'Invalid project image reference' };
   }
 
   // 2. Save to Database
@@ -108,7 +95,7 @@ export async function createProject(prevState: any, formData: FormData) {
 export async function updateProject(projectId: string, prevState: any, formData: FormData) {
   const session = await auth();
 
-  if (!session) {
+  if (!session?.user?.username) {
     throw new Error('Unauthorized');
   }
 
@@ -122,7 +109,7 @@ export async function updateProject(projectId: string, prevState: any, formData:
   const techStackJson = formData.get('techStack') as string;
   const liveLink = formData.get('liveLink') as string;
   const githubLink = formData.get('githubLink') as string;
-  const imageBase64 = formData.get('image') as string;
+  const imageUrl = (formData.get('image') as string)?.trim();
   const featured = formData.get('featured') === 'on';
 
   let categoryIds = [];
@@ -150,20 +137,18 @@ export async function updateProject(projectId: string, prevState: any, formData:
       return { error: 'Project not found' };
     }
 
-    let imageUrl = project.image;
-
-    // Only upload if it's a new base64 image (not the existing URL)
-    if (imageBase64 && imageBase64.startsWith('data:image')) {
-      try {
-        const uploadResponse = await cloudinary.uploader.upload(imageBase64, {
-          folder: getCloudinaryPath(session.user.username!, 'Project_Images'),
-          use_filename: true,
-          unique_filename: true,
-        });
-        imageUrl = uploadResponse.secure_url;
-      } catch (error: any) {
-        return { error: 'Image upload failed' };
+    // Validate asset reference if updated
+    if (imageUrl && imageUrl !== project.image) {
+      const validation = validateAssetReference(imageUrl, {
+        username: session.user.username,
+        purpose: 'project-thumbnail',
+      });
+      if (!validation.valid) {
+        return { error: validation.error || 'Invalid project image reference' };
       }
+      project.image = imageUrl;
+    } else if (!imageUrl) {
+      return { error: 'Project image is required' };
     }
 
     project.title = title;
@@ -174,7 +159,6 @@ export async function updateProject(projectId: string, prevState: any, formData:
     project.techStack = techStackIds;
     project.liveLink = liveLink;
     project.githubLink = githubLink;
-    project.image = imageUrl;
     project.featured = featured;
 
     await project.save();
