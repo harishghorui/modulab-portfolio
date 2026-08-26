@@ -1,10 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import dbConnect from "@/lib/db";
-import Project from "@/models/Project";
-import Profile from "@/models/Profile";
-import Skill from "@/models/Skill";
-import Category from "@/models/Category";
+import { getProfileByUserId, isProfileComplete as checkProfileComplete } from "@/lib/domains/profile";
+import { getCMSDashboardStats } from "@/lib/domains/portfolio";
 import Link from "next/link";
 import { 
   LayoutGrid, 
@@ -24,21 +21,13 @@ export default async function AdminPage() {
     redirect("/login");
   }
 
-  await dbConnect();
-
-  const [projectCount, featuredCount, profile, skillCount, latestProjects] = await Promise.all([
-    Project.countDocuments({ userId: session.user.id }),
-    Project.countDocuments({ userId: session.user.id, featured: true }),
-    Profile.findOne({ userId: session.user.id }).lean(),
-    Skill.countDocuments({ userId: session.user.id }),
-    Project.find({ userId: session.user.id })
-      .sort({ createdAt: -1 })
-      .limit(3)
-      .populate({ path: 'category', model: Category, select: 'name' })
-      .lean()
+  const [cmsStats, profile] = await Promise.all([
+    getCMSDashboardStats(session.user.id),
+    getProfileByUserId(session.user.id),
   ]);
 
-  const isProfileComplete = profile && (profile as any).bio && (skillCount > 0 || (profile as any).skills?.length > 0);
+  const { projectCount, featuredCount, skillCount, latestProjects } = cmsStats;
+  const isProfileComplete = checkProfileComplete(profile, skillCount);
 
   const stats = [
     {
