@@ -196,3 +196,34 @@ Previous implementations transported multi-megabyte Base64 data strings through 
   - Enforces strict multi-tenant namespace isolation at both signature generation and action validation stages.
 * **Negative**:
   - If a user uploads an image but abandons the form before saving, the asset exists in Cloudinary without a referencing MongoDB record (reconcilable via periodic cleanup).
+
+---
+
+## ADR-010: Public Portfolio Query Boundary
+
+### Status
+**Accepted**
+
+### Context
+The Public Portfolio Delivery domain (`src/app/[username]/`) was initially allowed to perform direct Mongoose read queries across models owned by Identity (`User`), Developer Profile (`Profile`), and Portfolio CMS (`Project`, `Skill`, `SkillCategory`, `Category`). Although these operations were strictly read-only and did not violate single-writer rules, direct Mongoose coupling in the presentation layer blurred domain ownership, leaked BSON query mechanics into App Router rendering components, and weakened extraction readiness.
+
+### Decision
+Establish a dedicated in-process Public Portfolio query/read boundary under [`src/lib/domains/public-portfolio/`](file:///home/harish/Harish/Git/Modulab/src/lib/domains/public-portfolio/). The public renderer (`src/app/[username]/page.tsx`) consumes the boundary's canonical read contract `getPublicPortfolioData(username)` instead of directly importing or querying domain-owned persistence models.
+
+Key architectural invariants:
+1. **Strict Read-Only Delivery**: Public Delivery owns zero persistence models and performs zero mutations.
+2. **Persistence Ownership Preserved**: Model ownership remains strictly with Identity (`User`), Developer Profile (`Profile`), and Portfolio CMS (`Project`, `Skill`, `Category`, `SkillCategory`).
+3. **In-Process Modular Monolith Boundary**: The boundary coordinates database queries in-process within the modular monolith with zero network overhead. It is not an external microservice or HTTP endpoint.
+4. **Clean Serialization**: The query helper returns plain, sanitized JavaScript objects safe for Server-to-Client component boundaries.
+5. **Extraction Readiness**: Isolates the public renderer from Mongoose schemas, indexes, and connection pooling. In Phase 2/3, replacing the in-process helper with an HTTP client (`GET /api/v1/public/portfolios/:username`) will require zero changes to the public presentation layer.
+
+### Consequences
+* **Positive**:
+  - Eliminates direct persistence coupling from the public presentation layer (`src/app/[username]/page.tsx`).
+  - Enforces domain ownership boundaries for reads as well as writes.
+  - Guarantees clean object serialization and isolates Mongoose document mechanics from React Server Components.
+  - Provides a single canonical read contract for tenant portfolio projections.
+* **Negative**:
+  - Introduces an additional domain helper abstraction layer in the modular monolith.
+  - Aggregation types and query contracts must be maintained as public presentation requirements evolve.
+

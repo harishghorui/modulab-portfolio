@@ -17,6 +17,7 @@ graph TD
         PortfolioLanding["Portfolio Showcase (/portfolio)<br/>Product Marketing & Features"]
         PortfolioCMS["Portfolio Studio / CMS (/admin)<br/>Projects, Skills, Categories, Profile"]
         PublicRenderer["Dynamic Portfolio Engine (/[username])<br/>Public Tenant Portfolios"]
+        PublicQueryBoundary["Public Portfolio Query Boundary<br/>(@/lib/domains/public-portfolio)"]
     end
 
     subgraph ExternalServices["External Infrastructure"]
@@ -28,8 +29,9 @@ graph TD
     UnifiedAuth --> MongoDB
     PortfolioCMS --> MongoDB
     PortfolioCMS --> Cloudinary
-    PublicRenderer --> MongoDB
-    PublicRenderer --> Cloudinary
+    PublicRenderer --> PublicQueryBoundary
+    PublicQueryBoundary --> MongoDB
+    PublicQueryBoundary --> Cloudinary
 ```
 
 ### Core Terminology & Boundaries
@@ -48,7 +50,8 @@ The routing topology is managed at the edge through [`src/proxy.ts`](file:///hom
 flowchart TD
     Req([Incoming HTTP Request]) --> Proxy["Proxy Router (src/proxy.ts)"]
 
-    Proxy --> CheckHost{Hostname Check}
+    CheckHost{Hostname Check}
+    Proxy --> CheckHost
 
     CheckHost -->|modulab.online<br/>or localhost:3000| RootDomain["Apex / Platform Domain"]
     CheckHost -->|dev.modulab.online<br/>or dev.localhost:3000| DevDomain["Portfolio Product Subdomain"]
@@ -89,9 +92,9 @@ flowchart TD
 ### 3.3 Dynamic Portfolio Engine (`src/app/[username]/`)
 * **Purpose**: Server-rendered, highly optimized public portfolio page for any registered developer tenant.
 * **Key Components**:
-  * [`src/app/[username]/page.tsx`](file:///home/harish/Harish/Git/Modulab/src/app/%5Busername%5D/page.tsx): Server Component fetching user profile, categorized projects, and skills in parallel.
-  * [`src/app/[username]/PortfolioClient.tsx`](file:///home/harish/Harish/Git/Modulab/src/app/%5Busername%5D/PortfolioClient.tsx): Client Component rendering hero, project filter tabs, modal dialogs, and responsive navigation.
-  * Metadata Generator: Dynamically populates SEO `title` and `description` per tenant.
+  * [`src/app/[username]/page.tsx`](file:///home/harish/Harish/Git/Modulab/src/app/%5Busername%5D/page.tsx): Thin Server Component invoking the canonical in-process query helper `getPublicPortfolioData(username)` from `@/lib/domains/public-portfolio`.
+  * [`src/app/[username]/PortfolioClient.tsx`](file:///home/harish/Harish/Git/Modulab/src/app/%5Busername%5D/PortfolioClient.tsx): Client Component rendering hero, project filter tabs, modal dialogs, and responsive navigation from serialized props.
+  * Metadata Generator: Dynamically populates SEO `title` and `description` from the domain query result.
 
 ### 3.4 Portfolio Studio / CMS (`src/app/admin/`)
 * **Purpose**: Authenticated dashboard where developers curate their professional identity.
@@ -188,12 +191,12 @@ erDiagram
 
 | Model | Exclusively Owned By | Allowed Writers | Allowed Direct Readers | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| [`User`](file:///home/harish/Harish/Git/Modulab/src/models/User.ts) | **Identity & Authentication** | Identity Domain only (`/api/register`, `updateUserIdentity`) | Identity Domain (`auth.ts`, `updateUserIdentity`) | Tenant Root Entity |
-| [`Profile`](file:///home/harish/Harish/Git/Modulab/src/models/Profile.ts) | **Developer Profile** | Profile Domain only (`profile/actions.ts`) | Profile Domain, Public Portfolio Renderer | Tenant Personalization |
-| [`Project`](file:///home/harish/Harish/Git/Modulab/src/models/Project.ts) | **Portfolio Content CMS** | Portfolio CMS only (`projects/actions.ts`) | Portfolio CMS, Public Portfolio Renderer | Showcase Item |
-| [`Skill`](file:///home/harish/Harish/Git/Modulab/src/models/Skill.ts) | **Portfolio Content CMS** | Portfolio CMS only (`skills/actions.ts`) | Portfolio CMS, Public Portfolio Renderer | Technology Matrix |
-| [`SkillCategory`](file:///home/harish/Harish/Git/Modulab/src/models/SkillCategory.ts) | **Portfolio Content CMS** | Portfolio CMS only (`skills/actions.ts`) | Portfolio CMS, Public Portfolio Renderer | Skill Grouping |
-| [`Category`](file:///home/harish/Harish/Git/Modulab/src/models/Category.ts) | **Portfolio Content CMS** | Portfolio CMS only (`categories/actions.ts`) | Portfolio CMS, Public Portfolio Renderer | Project Taxonomy |
+| [`User`](file:///home/harish/Harish/Git/Modulab/src/models/User.ts) | **Identity & Authentication** | Identity Domain only (`/api/register`, `updateUserIdentity`) | Identity Domain (`auth.ts`, `updateUserIdentity`), Public Portfolio Query Boundary | Tenant Root Entity |
+| [`Profile`](file:///home/harish/Harish/Git/Modulab/src/models/Profile.ts) | **Developer Profile** | Profile Domain only (`profile/actions.ts`) | Profile Domain (`getProfile.ts`), Public Portfolio Query Boundary | Tenant Personalization |
+| [`Project`](file:///home/harish/Harish/Git/Modulab/src/models/Project.ts) | **Portfolio Content CMS** | Portfolio CMS only (`projects/actions.ts`) | Portfolio CMS (`queries.ts`, manager actions), Public Portfolio Query Boundary | Showcase Item |
+| [`Skill`](file:///home/harish/Harish/Git/Modulab/src/models/Skill.ts) | **Portfolio Content CMS** | Portfolio CMS only (`skills/actions.ts`) | Portfolio CMS (`queries.ts`, manager actions), Public Portfolio Query Boundary | Technology Matrix |
+| [`SkillCategory`](file:///home/harish/Harish/Git/Modulab/src/models/SkillCategory.ts) | **Portfolio Content CMS** | Portfolio CMS only (`skills/actions.ts`) | Portfolio CMS (`queries.ts`, manager actions), Public Portfolio Query Boundary | Skill Grouping |
+| [`Category`](file:///home/harish/Harish/Git/Modulab/src/models/Category.ts) | **Portfolio Content CMS** | Portfolio CMS only (`categories/actions.ts`) | Portfolio CMS (`queries.ts`, manager actions), Public Portfolio Query Boundary | Project Taxonomy |
 
 ### 4.2 Write Isolation & Cross-Domain Mutation Rules
 
@@ -202,9 +205,9 @@ erDiagram
    - The [`User`](file:///home/harish/Harish/Git/Modulab/src/models/User.ts) model is exclusively owned by **Identity & Authentication**.
    - **NO other domain** (including Developer Profile or Portfolio CMS) may directly import or mutate the `User` model.
    - Any profile-initiated identity update (e.g. updating `firstName`, `lastName`, or `username`) must call an explicit in-process domain boundary helper: [`src/lib/domains/identity/updateUserIdentity.ts`](file:///home/harish/Harish/Git/Modulab/src/lib/domains/identity/updateUserIdentity.ts).
-3. **Public Engine Read-Only Invariant**: The **Public Portfolio Delivery Engine** (`src/app/[username]/`) is strictly read-only and owns zero persistent models.
+3. **Public Engine Read-Only Invariant**: The **Public Portfolio Delivery Engine** (`src/app/[username]/`) is strictly read-only, owns zero persistent models, and consumes data exclusively through the dedicated in-process Public Portfolio Query Boundary (`getPublicPortfolioData` in `@/lib/domains/public-portfolio`).
 4. **Media Supporting Role**: The **Media & Asset Pipeline** owns all direct interactions with Cloudinary SDKs and APIs. Domain Server Actions interact with media via dedicated helpers.
-5. **Cross-Domain Communication Principle**: In the Phase 1.5 modular monolith, cross-domain interactions MUST pass through formal domain boundary modules under `src/lib/domains/<domain>/` rather than directly importing another domain's Mongoose model.
+5. **Cross-Domain Communication Principle**: In the Phase 1.5 modular monolith, cross-domain interactions MUST pass through formal domain boundary modules under `src/lib/domains/<domain>/` rather than directly importing another domain's Mongoose models. Domain ownership applies to both persistence and access boundaries: read-only consumers consume published domain query helpers rather than querying foreign models directly.
 
 ---
 
@@ -217,15 +220,18 @@ graph TD
     ProfileDomain["3. Developer Profile<br/>(/admin/profile, Profile)"]
     CMSDomain["4. Portfolio Content CMS<br/>(/admin/*, Project, Skill, Category)"]
     PublicDelivery["5. Public Portfolio Delivery<br/>(dev.modulab.online/:username)"]
+    PublicQueryBoundary["Public Portfolio Query Boundary<br/>(@/lib/domains/public-portfolio)"]
     MediaPipeline["6. Media & Asset Pipeline<br/>(Cloudinary, /api/download)"]
 
     PlatformGateway -.->|External Nav Link| PublicDelivery
     ProfileDomain -->|Calls updateUserIdentity| IdentityDomain
     ProfileDomain --> MediaPipeline
     CMSDomain --> MediaPipeline
-    PublicDelivery --> IdentityDomain
-    PublicDelivery --> ProfileDomain
-    PublicDelivery --> CMSDomain
+    PublicDelivery --> PublicQueryBoundary
+    PublicQueryBoundary --> IdentityDomain
+    PublicQueryBoundary --> ProfileDomain
+    PublicQueryBoundary --> CMSDomain
+    PublicQueryBoundary -->|Calls getDownloadUrl| MediaPipeline
 ```
 
 ### 1. Platform Gateway Domain
@@ -259,9 +265,10 @@ graph TD
 ### 5. Public Portfolio Delivery Domain
 * **Responsibility**: High-speed public rendering of tenant portfolios, dynamic SEO/OpenGraph metadata generation, client-side project filtering, sanitized HTML display.
 * **Owned Models / Data**: None (Pure Read Model / Projection).
-* **Allowed Dependencies**: Read-only access to Identity, Profile, and Portfolio CMS data; `DOMPurify`; UI components.
-* **Prohibited Dependencies**: Any write/mutation operations, Server Actions, auth modification.
-* **Future Extraction Target**: `portfolio-renderer` (Edge SSR / Static Rendering Micro-Frontend).
+* **Access Boundary**: Consumes the in-process query boundary [`src/lib/domains/public-portfolio/`](file:///home/harish/Harish/Git/Modulab/src/lib/domains/public-portfolio/) (`getPublicPortfolioData`).
+* **Allowed Dependencies**: Public portfolio query helper (`getPublicPortfolioData`), `DOMPurify`, UI components.
+* **Prohibited Dependencies**: Direct Mongoose model imports (`User`, `Profile`, `Project`, `Skill`, `SkillCategory`, `Category`), `src/lib/db`, any write/mutation operations, Server Actions, auth modification.
+* **Future Extraction Target**: `portfolio-renderer` (Edge SSR / Static Rendering Micro-Frontend consuming `GET /api/v1/public/portfolios/:username`).
 
 ### 6. Media & Asset Pipeline (Technical Capability Domain)
 * **Responsibility**: Cloudinary folder hierarchization (`Modulab/{username}/{category}`), dynamic transformation URLs (`getOptimizedImageUrl`), authorized signed download streaming for attachments (`/api/download`).

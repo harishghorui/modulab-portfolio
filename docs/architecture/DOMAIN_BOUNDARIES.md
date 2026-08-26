@@ -20,6 +20,7 @@ graph TD
 
     subgraph Layer3["3. Public Delivery Layer"]
         PublicRenderer["Public Portfolio Delivery Engine<br/>(dev.modulab.online/:username)"]
+        PublicQueryBoundary["Public Portfolio Query Boundary<br/>(@/lib/domains/public-portfolio)"]
     end
 
     subgraph Layer4["4. Infrastructure Supporting Domain"]
@@ -30,9 +31,11 @@ graph TD
     ProfileDomain -->|Calls updateUserIdentity()| IdentityDomain
     ProfileDomain --> MediaDomain
     CMSDomain --> MediaDomain
-    PublicRenderer -->|Read Aggregation| IdentityDomain
-    PublicRenderer -->|Read Aggregation| ProfileDomain
-    PublicRenderer -->|Read Aggregation| CMSDomain
+    PublicRenderer --> PublicQueryBoundary
+    PublicQueryBoundary -->|Read Aggregation| IdentityDomain
+    PublicQueryBoundary -->|Read Aggregation| ProfileDomain
+    PublicQueryBoundary -->|Read Aggregation| CMSDomain
+    PublicQueryBoundary -->|Signed Download Stream| MediaDomain
 ```
 
 ---
@@ -45,7 +48,7 @@ graph TD
 | **2. Identity & Authentication** | User credentials, registration, password hashing, JWT tokens, username reservation | [`User`](file:///home/harish/Harish/Git/Modulab/src/models/User.ts) | `/login`, `/api/register`, `/api/auth/*` | `users` MongoDB collection |
 | **3. Developer Profile** | Developer bio, headline, avatar, resume lifecycle, social profiles | [`Profile`](file:///home/harish/Harish/Git/Modulab/src/models/Profile.ts) | `/admin/profile` | `profiles` MongoDB collection |
 | **4. Portfolio Content CMS** | Portfolio project authoring, taxonomy categories, technical skill matrix, dashboard metrics | [`Project`](file:///home/harish/Harish/Git/Modulab/src/models/Project.ts), [`Category`](file:///home/harish/Harish/Git/Modulab/src/models/Category.ts), [`Skill`](file:///home/harish/Harish/Git/Modulab/src/models/Skill.ts), [`SkillCategory`](file:///home/harish/Harish/Git/Modulab/src/models/SkillCategory.ts) | `/admin`, `/admin/projects/*`, `/admin/categories`, `/admin/skills` | `projects`, `categories`, `skills`, `skillcategories` MongoDB collections |
-| **5. Public Portfolio Delivery** | Read-optimized public rendering, dynamic SEO/OpenGraph tags, HTML sanitization | *None (Read Projection)* | `/[username]` | Edge CDN cache |
+| **5. Public Portfolio Delivery** | Read-optimized public rendering, dynamic SEO/OpenGraph tags, HTML sanitization | *None (Read Projection)* | `/[username]` | *None* (Stateless edge rendering) |
 | **6. Media & Asset Pipeline** | Image optimization, CDN hierarchization, signed resume download stream | *None* | `/api/download` | `Modulab/{username}/*` Cloudinary namespace |
 
 ---
@@ -56,7 +59,7 @@ graph TD
 flowchart LR
     subgraph Allowed["Allowed Dependency Flow"]
         direction TB
-        AppRoutes["App Routes & Server Actions"] --> DomainHelpers["src/lib/domains/* (Boundary Helpers)"]
+        AppRoutes["App Routes (e.g. /[username], /admin)"] --> DomainHelpers["src/lib/domains/* (Query & Mutation Helpers)"]
         DomainHelpers --> OwnedModels["src/models/* (Owned Models Only)"]
         DomainHelpers --> Libs["src/lib/* (dbConnect, utils, devicon)"]
     end
@@ -65,6 +68,7 @@ flowchart LR
         direction TB
         BadAction["Action in Domain A (e.g. Profile)"] -.->|BANNED DIRECT MUTATION| ForeignModel["Model in Domain B (e.g. User)"]
         BadCMS["Action in CMS (e.g. Projects)"] -.->|BANNED DIRECT CLOUDINARY| DirectSDK["Cloudinary SDK in Business Action"]
+        BadPublic["Public Page (src/app/[username])"] -.->|BANNED DIRECT PERSISTENCE ACCESS| DirectModels["Direct Mongoose Model Imports"]
     end
 ```
 
@@ -72,11 +76,11 @@ flowchart LR
 
 | Calling Location | Allowed Imports | Prohibited Imports |
 | :--- | :--- | :--- |
-| **`src/app/admin/profile/*`** | • `@/models/Profile`<br/>• `@/lib/domains/identity` (`updateUserIdentity`, `getUserIdentity`)<br/>• `@/lib/domains/media` / `@/lib/domains/media/client`<br/>• `@/lib/utils` | ❌ `import User from '@/models/User'` *(Prohibited)*<br/>❌ Direct writes to `User` collection |
+| **`src/app/admin/profile/*`** | • `@/models/Profile`<br/>• `@/lib/domains/identity` (`updateUserIdentity`, `getUserIdentity`)<br/>• `@/lib/domains/profile` (`getProfileByUserId`)<br/>• `@/lib/domains/media` / `@/lib/domains/media/client`<br/>• `@/lib/utils` | ❌ `import User from '@/models/User'` *(Prohibited)*<br/>❌ Direct writes to `User` collection |
 | **`src/app/admin/projects/*`** | • `@/models/Project`<br/>• `@/models/Category`<br/>• `@/models/Skill`<br/>• `@/lib/domains/media` / `@/lib/domains/media/client`<br/>• `@/lib/utils` | ❌ `@/models/User`<br/>❌ `@/models/Profile`<br/>❌ Direct mutations to non-CMS models |
 | **`src/app/admin/skills/*`** | • `@/models/Skill`<br/>• `@/models/SkillCategory`<br/>• `@/lib/devicon`<br/>• `@/lib/utils` | ❌ `@/models/User`<br/>❌ `@/models/Project`<br/>❌ `@/models/Profile` |
 | **`src/app/admin/categories/*`** | • `@/models/Category`<br/>• `@/lib/utils` | ❌ `@/models/User`<br/>❌ `@/models/Project` |
-| **`src/app/[username]/*`** | • Read queries on domain models<br/>• `@/lib/utils`<br/>• `DOMPurify` | ❌ Any write operation (`save`, `update`, `delete`)<br/>❌ Server Actions |
+| **`src/app/[username]/*`** | • `@/lib/domains/public-portfolio` (`getPublicPortfolioData`)<br/>• `@/lib/utils`<br/>• `DOMPurify`<br/>• Shared UI presentation components | ❌ Direct `@/models/*` imports (`User`, `Profile`, `Project`, `Skill`, `SkillCategory`, `Category`)<br/>❌ `@/lib/db` (`dbConnect`)<br/>❌ Any database mutation (`save`, `update`, `delete`)<br/>❌ Server Actions |
 | **`src/app/platform/*`** | • Shared UI components (`@/components/ui/*`)<br/>• `@/lib/utils` | ❌ Any `@/models/*`<br/>❌ `@/lib/db`<br/>❌ Server Actions |
 
 ---
@@ -96,6 +100,9 @@ If Domain A requires an operation from Domain B:
 
 ### Rule 3: Direct Media Uploads & Binary Transport Decoupling
 Business domains do not transport binary media or multi-megabyte Base64 strings through Server Actions. Upload authorization is obtained from the Media domain via `POST /api/v1/media/presign` and binary assets are uploaded directly to the configured media provider from the browser. Server Actions receive and validate only the resulting asset reference.
+
+### Rule 4: Read & Query Boundary Isolation
+Domain ownership applies to both persistence and access boundaries. A read-only consumer should not bypass the owning domain's published read/query contract merely because the domains are currently in the same process. In Phase 1.5, App Router pages and public delivery renderers must consume dedicated in-process query helpers (`@/lib/domains/public-portfolio`, `@/lib/domains/portfolio`, `@/lib/domains/profile`, `@/lib/domains/identity`) rather than directly importing foreign Mongoose models.
 
 ---
 
@@ -168,13 +175,55 @@ export async function checkUsername(username: string) {
 
 ---
 
+### Example 3: Public Portfolio Read Aggregation
+
+#### ❌ Non-Compliant (Direct Mongoose Model Coupling):
+```typescript
+// src/app/[username]/page.tsx
+import User from '@/models/User';
+import Profile from '@/models/Profile';
+import Project from '@/models/Project';
+import Skill from '@/models/Skill';
+import SkillCategory from '@/models/SkillCategory';
+import Category from '@/models/Category';
+import dbConnect from '@/lib/db';
+
+export default async function PortfolioPage({ params }) {
+  await dbConnect();
+  // BANNED: Presentation layer directly importing 6 persistence models and querying DB
+  const user = await User.findOne({ username: params.username });
+  const projects = await Project.find({ userId: user._id }).populate('techStack');
+  // ...
+}
+```
+
+#### ✅ Compliant (Public Portfolio Query Boundary):
+```typescript
+// src/app/[username]/page.tsx
+import { getPublicPortfolioData } from '@/lib/domains/public-portfolio'; // COMPLIANT: Canonical query helper
+import { notFound } from 'next/navigation';
+
+export default async function PortfolioPage({ params }) {
+  const { username } = await params;
+  const data = await getPublicPortfolioData(username);
+
+  if (!data) {
+    notFound();
+  }
+
+  return <PortfolioClient data={data} />;
+}
+```
+
+---
+
 ## 6. Service Extraction Readiness & Target Contracts
 
 | Domain | Extraction Readiness | Primary Blocker to Immediate Extraction | Future Target Service | Future Network Contract |
 | :--- | :---: | :--- | :--- | :--- |
 | **Platform Gateway** | **10 / 10** | None (Currently co-located in App Router) | `apps/platform` | Static CDN / Edge Rewrite |
-| **Identity & Auth** | **8.5 / 10** | In-process NextAuth session sharing | `identity-service` | `POST /api/v1/auth/register`<br/>`POST /api/v1/auth/login`<br/>`PATCH /api/v1/users/:id` |
-| **Developer Profile** | **9.0 / 10** | In-process NextAuth session sharing | `profile-service` | `GET /api/v1/profiles/:userId`<br/>`PUT /api/v1/profiles/:userId` |
+| **Identity & Auth** | **9.0 / 10** | In-process NextAuth session sharing | `identity-service` | `POST /api/v1/auth/register`<br/>`POST /api/v1/auth/login`<br/>`PATCH /api/v1/users/:id` |
+| **Developer Profile** | **9.5 / 10** | In-process NextAuth session sharing | `profile-service` | `GET /api/v1/profiles/:userId`<br/>`PUT /api/v1/profiles/:userId` |
 | **Portfolio CMS** | **9.0 / 10** | In-process NextAuth session sharing | `portfolio-service` | `GET /api/v1/projects`<br/>`POST /api/v1/projects`<br/>`GET /api/v1/skills` |
-| **Public Delivery** | **8.0 / 10** | Direct Mongoose read queries in page.tsx | `portfolio-renderer` | Consumes `GET /api/v1/public/portfolios/:username` |
-| **Media Pipeline** | **9.0 / 10** | In-process NextAuth session sharing | `media-service` | `POST /api/v1/media/presign`<br/>`GET /api/v1/media/download` |
+| **Public Delivery** | **9.5 / 10** | None (Query boundary established behind `getPublicPortfolioData`); ready for transition to `GET /api/v1/public/portfolios/:username` client | `portfolio-renderer` | Consumes `GET /api/v1/public/portfolios/:username` |
+| **Media Pipeline** | **9.5 / 10** | In-process NextAuth session sharing | `media-service` | `POST /api/v1/media/presign`<br/>`GET /api/v1/media/download` |
