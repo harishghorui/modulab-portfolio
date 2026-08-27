@@ -2,7 +2,7 @@ import dbConnect from '@/lib/db';
 import Project from '@/models/Project';
 import Skill from '@/models/Skill';
 import Category from '@/models/Category';
-import { CMSDashboardStats } from './types';
+import { CMSDashboardStats, AdminProject } from './types';
 
 /**
  * Retrieves aggregated CMS statistics and recent projects for the admin dashboard.
@@ -41,4 +41,23 @@ export async function getCMSDashboardStats(
     skillCount,
     latestProjects,
   };
+}
+
+/**
+ * Retrieves all projects owned by a user for the admin project manager.
+ * Populates category taxonomy and returns clean serialized plain objects.
+ */
+export async function getAdminProjects(
+  userId?: string
+): Promise<AdminProject[]> {
+  if (!userId) return [];
+
+  await dbConnect();
+
+  const projects = await Project.find({ userId })
+    .populate({ path: 'category', model: Category, select: 'name' })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return JSON.parse(JSON.stringify(projects || []));
 }

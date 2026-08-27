@@ -1,7 +1,6 @@
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
-import dbConnect from '@/lib/db';
-import Project from '@/models/Project';
+import { getAdminProjects } from '@/lib/domains/portfolio';
 import ProjectsTable from './ProjectsTable';
 
 export default async function AdminProjectsPage() {
@@ -11,15 +10,7 @@ export default async function AdminProjectsPage() {
     redirect('/login');
   }
 
-  await dbConnect();
+  const projects = await getAdminProjects(session.user.id);
 
-  const projects = await Project.find({ userId: session.user.id })
-    .populate('category')
-    .sort({ createdAt: -1 })
-    .lean();
-
-  // Serialize MongoDB data for the client component
-  const serializedProjects = JSON.parse(JSON.stringify(projects));
-
-  return <ProjectsTable initialProjects={serializedProjects} />;
+  return <ProjectsTable initialProjects={projects} />;
 }
