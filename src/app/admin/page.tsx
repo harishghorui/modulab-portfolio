@@ -53,9 +53,9 @@ export default async function AdminPage() {
     }
   ];
 
-  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-  const baseDomain = process.env.NODE_ENV === "production" ? "modulab.online" : "localhost:3000";
-  const portfolioUrl = `${protocol}://dev.${baseDomain}/${session.user.username || ''}`;
+  const portfolioBaseUrl = process.env.NEXT_PUBLIC_PORTFOLIO_URL || (process.env.NODE_ENV === "production" ? "https://dev.modulab.online" : "http://dev.localhost:3000");
+  const portfolioUrl = `${portfolioBaseUrl.replace(/\/$/, '')}/${session.user.username || ''}`;
+
 
   return (
     <div className="space-y-10">

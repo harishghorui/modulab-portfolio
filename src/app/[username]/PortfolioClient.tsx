@@ -619,7 +619,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
             <div className="flex items-center gap-6">
               <a href="#" className="hover:text-blue-600 transition-colors">Back to top</a>
               <span className="w-1 h-1 bg-zinc-800 rounded-full" />
-              <span>Built with <a href="https://modulab.online" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-bold">Modulab Dev</a></span>
+              <span>Built with <a href={process.env.NEXT_PUBLIC_PLATFORM_URL || "https://modulab.online"} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-bold">Modulab Dev</a></span>
             </div>
           </div>
         </div>

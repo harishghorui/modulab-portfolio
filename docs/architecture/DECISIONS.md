@@ -227,3 +227,35 @@ Key architectural invariants:
   - Introduces an additional domain helper abstraction layer in the modular monolith.
   - Aggregation types and query contracts must be maintained as public presentation requirements evolve.
 
+---
+
+## ADR-011: Repository Separation — Platform and Portfolio
+
+### Status
+**Accepted**
+
+### Context
+Modulab is designed as an ecosystem of developer products with `modulab.online` as the platform brand and `dev.modulab.online` as the portfolio product. In Phase 1 & 1.5, both surfaces lived in a single Next.js modular monolith repository.
+
+As the platform moves toward independent product deployment and lifecycle separation, hosting the static marketing site (`modulab-platform`) and the full-stack Portfolio CMS (`modulab-portfolio`) in independent repositories allows decoupled deployments, dedicated CI/CD pipelines, and simplified infrastructure without premature microservice overhead.
+
+### Decision
+1. **Separate Repositories**:
+   - `modulab-platform`: Standalone static marketing site deployed at `modulab.online`.
+   - `modulab-portfolio`: Full-stack modular monolith deployed at `dev.modulab.online`.
+2. **Preserve Portfolio Architecture**:
+   - Portfolio retains MongoDB connection, all 6 Mongoose models, NextAuth v5 credentials auth, Cloudinary media pipeline, and all 5 domain boundaries.
+3. **Simplify Routing & Auth**:
+   - `src/proxy.ts` removes root/dev domain branching; retains auth-gated redirects and static asset passthrough.
+   - `src/auth.config.ts` removes hostname checks.
+   - `src/app/page.tsx` directly serves the portfolio product landing page.
+4. **Decouple Cross-Repository URLs**:
+   - Replace hardcoded domain references with environment variables (`NEXT_PUBLIC_PLATFORM_URL`, `NEXT_PUBLIC_PORTFOLIO_URL`).
+
+### Consequences
+* **Positive**:
+  - Independent deployment cycles and zero blast-radius between platform marketing updates and Portfolio CMS.
+  - Significantly reduced complexity in `proxy.ts` and `auth.config.ts`.
+  - Avoids premature microservice or monorepo tooling overhead.
+* **Negative**:
+  - Small branding assets (logos, favicons) are duplicated across repositories until shared package extraction is justified.

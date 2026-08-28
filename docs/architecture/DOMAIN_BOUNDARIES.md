@@ -1,6 +1,6 @@
-# Modulab Domain Boundaries Reference
+# Modulab Portfolio Domain Boundaries Reference
 
-> **Canonical Developer Guide**: Rules of engagement for module boundaries, data ownership, cross-domain imports, and in-process service helpers within the Modulab modular monolith.
+> **Canonical Developer Guide**: Rules of engagement for module boundaries, data ownership, cross-domain imports, and in-process service helpers within the Modulab Portfolio (`modulab-portfolio`) modular monolith.
 
 ---
 
@@ -8,8 +8,8 @@
 
 ```mermaid
 graph TD
-    subgraph Layer1["1. Gateway Layer"]
-        PlatformDomain["Platform Gateway Domain<br/>(modulab.online/platform)"]
+    subgraph Layer1["1. External Platform"]
+        PlatformDomain["Platform Gateway<br/>(modulab-platform repo)"]
     end
 
     subgraph Layer2["2. Core Domain Services"]
@@ -27,7 +27,7 @@ graph TD
         MediaDomain["Media & Asset Pipeline<br/>(Cloudinary, /api/download)"]
     end
 
-    PlatformDomain -.->|External Link| PublicRenderer
+    PlatformDomain -.->|Cross-repo link| PublicRenderer
     ProfileDomain -->|Calls updateUserIdentity()| IdentityDomain
     ProfileDomain --> MediaDomain
     CMSDomain --> MediaDomain
@@ -44,12 +44,11 @@ graph TD
 
 | Domain Name | Primary Responsibility | Owned Models | Owned Routes / Pages | Owned Storage / Infrastructure |
 | :--- | :--- | :--- | :--- | :--- |
-| **1. Platform Gateway** | Platform marketing, ecosystem directory, mission presentation | *None* | `/platform`, `/` (redirect) | Static edge assets |
-| **2. Identity & Authentication** | User credentials, registration, password hashing, JWT tokens, username reservation | [`User`](file:///home/harish/Harish/Git/Modulab/src/models/User.ts) | `/login`, `/api/register`, `/api/auth/*` | `users` MongoDB collection |
-| **3. Developer Profile** | Developer bio, headline, avatar, resume lifecycle, social profiles | [`Profile`](file:///home/harish/Harish/Git/Modulab/src/models/Profile.ts) | `/admin/profile` | `profiles` MongoDB collection |
-| **4. Portfolio Content CMS** | Portfolio project authoring, taxonomy categories, technical skill matrix, dashboard metrics | [`Project`](file:///home/harish/Harish/Git/Modulab/src/models/Project.ts), [`Category`](file:///home/harish/Harish/Git/Modulab/src/models/Category.ts), [`Skill`](file:///home/harish/Harish/Git/Modulab/src/models/Skill.ts), [`SkillCategory`](file:///home/harish/Harish/Git/Modulab/src/models/SkillCategory.ts) | `/admin`, `/admin/projects/*`, `/admin/categories`, `/admin/skills` | `projects`, `categories`, `skills`, `skillcategories` MongoDB collections |
-| **5. Public Portfolio Delivery** | Read-optimized public rendering, dynamic SEO/OpenGraph tags, HTML sanitization | *None (Read Projection)* | `/[username]` | *None* (Stateless edge rendering) |
-| **6. Media & Asset Pipeline** | Image optimization, CDN hierarchization, signed resume download stream | *None* | `/api/download` | `Modulab/{username}/*` Cloudinary namespace |
+| **1. Identity & Authentication** | User credentials, registration, password hashing, JWT tokens, username reservation | [`User`](file:///home/harish/Harish/Git/Modulab/src/models/User.ts) | `/login`, `/api/register`, `/api/auth/*` | `users` MongoDB collection |
+| **2. Developer Profile** | Developer bio, headline, avatar, resume lifecycle, social profiles | [`Profile`](file:///home/harish/Harish/Git/Modulab/src/models/Profile.ts) | `/admin/profile` | `profiles` MongoDB collection |
+| **3. Portfolio Content CMS** | Portfolio project authoring, taxonomy categories, technical skill matrix, dashboard metrics | [`Project`](file:///home/harish/Harish/Git/Modulab/src/models/Project.ts), [`Category`](file:///home/harish/Harish/Git/Modulab/src/models/Category.ts), [`Skill`](file:///home/harish/Harish/Git/Modulab/src/models/Skill.ts), [`SkillCategory`](file:///home/harish/Harish/Git/Modulab/src/models/SkillCategory.ts) | `/admin`, `/admin/projects/*`, `/admin/categories`, `/admin/skills` | `projects`, `categories`, `skills`, `skillcategories` MongoDB collections |
+| **4. Public Portfolio Delivery** | Read-optimized public rendering, dynamic SEO/OpenGraph tags, HTML sanitization | *None (Read Projection)* | `/[username]` | *None* (Stateless edge rendering) |
+| **5. Media & Asset Pipeline** | Image optimization, CDN hierarchization, signed resume download stream | *None* | `/api/download`, `/api/v1/media/presign` | `Modulab/{username}/*` Cloudinary namespace |
 
 ---
 
@@ -81,7 +80,8 @@ flowchart LR
 | **`src/app/admin/skills/*`** | • `@/models/Skill`<br/>• `@/models/SkillCategory`<br/>• `@/lib/devicon`<br/>• `@/lib/utils` | ❌ `@/models/User`<br/>❌ `@/models/Project`<br/>❌ `@/models/Profile` |
 | **`src/app/admin/categories/*`** | • `@/models/Category`<br/>• `@/lib/utils` | ❌ `@/models/User`<br/>❌ `@/models/Project` |
 | **`src/app/[username]/*`** | • `@/lib/domains/public-portfolio` (`getPublicPortfolioData`)<br/>• `@/lib/utils`<br/>• `DOMPurify`<br/>• Shared UI presentation components | ❌ Direct `@/models/*` imports (`User`, `Profile`, `Project`, `Skill`, `SkillCategory`, `Category`)<br/>❌ `@/lib/db` (`dbConnect`)<br/>❌ Any database mutation (`save`, `update`, `delete`)<br/>❌ Server Actions |
-| **`src/app/platform/*`** | • Shared UI components (`@/components/ui/*`)<br/>• `@/lib/utils` | ❌ Any `@/models/*`<br/>❌ `@/lib/db`<br/>❌ Server Actions |
+| **`src/app/page.tsx`** | • Shared UI components (`@/components/ui/*`)<br/>• `@/lib/utils` | ❌ Any `@/models/*`<br/>❌ `@/lib/db`<br/>❌ Server Actions |
+
 
 ---
 
@@ -221,7 +221,7 @@ export default async function PortfolioPage({ params }) {
 
 | Domain | Extraction Readiness | Primary Blocker to Immediate Extraction | Future Target Service | Future Network Contract |
 | :--- | :---: | :--- | :--- | :--- |
-| **Platform Gateway** | **10 / 10** | None (Currently co-located in App Router) | `apps/platform` | Static CDN / Edge Rewrite |
+| **Platform Gateway** | **✅ Extracted** | None (Extracted to independent `modulab-platform` repository) | `modulab-platform` | Static CDN / Cross-domain links |
 | **Identity & Auth** | **9.0 / 10** | In-process NextAuth session sharing | `identity-service` | `POST /api/v1/auth/register`<br/>`POST /api/v1/auth/login`<br/>`PATCH /api/v1/users/:id` |
 | **Developer Profile** | **9.5 / 10** | In-process NextAuth session sharing | `profile-service` | `GET /api/v1/profiles/:userId`<br/>`PUT /api/v1/profiles/:userId` |
 | **Portfolio CMS** | **9.0 / 10** | In-process NextAuth session sharing | `portfolio-service` | `GET /api/v1/projects`<br/>`POST /api/v1/projects`<br/>`GET /api/v1/skills` |
