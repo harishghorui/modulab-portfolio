@@ -50,8 +50,8 @@ const ProjectSchema = new Schema({
 }, { timestamps: true });
 
 // Custom validator to ensure at least one category is selected
-ProjectSchema.path('category').validate(function (value: any) {
-  return value && value.length > 0;
+ProjectSchema.path('category').validate(function (value: unknown[]) {
+  return Array.isArray(value) && value.length > 0;
 }, 'Please specify at least one category');
 
 const Project = models.Project || model('Project', ProjectSchema);

@@ -6,7 +6,13 @@ import Skill from '@/models/Skill';
 import SkillCategory from '@/models/SkillCategory';
 import Category from '@/models/Category';
 import { getDownloadUrl } from '@/lib/domains/media/transform';
-import { PublicPortfolioData } from './types';
+import {
+  PublicPortfolioData,
+  PublicPortfolioProfile,
+  PublicPortfolioProject,
+  PublicPortfolioSkill,
+  PublicPortfolioSkillCategory,
+} from './types';
 
 /**
  * Assembles and serializes the complete public portfolio projection for a given username.
@@ -27,22 +33,22 @@ export async function getPublicPortfolioData(
     }
 
     const cleanUsername = username.toLowerCase().trim();
-    const user = (await User.findOne({ username: cleanUsername }).lean()) as any;
+    const user = await User.findOne({ username: cleanUsername }).lean<{ _id: unknown; username: string; firstName: string; lastName: string; email: string } | null>();
 
     if (!user) return null;
 
-    const [profile, projects, skills, skillCategories] = (await Promise.all([
-      Profile.findOne({ userId: user._id }).lean(),
+    const [profile, projects, skills, skillCategories] = await Promise.all([
+      Profile.findOne({ userId: user._id }).lean<PublicPortfolioProfile | null>(),
       Project.find({ userId: user._id })
         .populate('techStack')
         .populate('category')
         .sort({ featured: -1, createdAt: -1 })
-        .lean(),
-      Skill.find({ userId: user._id }).populate('category').lean(),
-      SkillCategory.find({ userId: user._id }).sort({ name: 1 }).lean(),
-    ])) as any[];
+        .lean<PublicPortfolioProject[]>(),
+      Skill.find({ userId: user._id }).populate('category').lean<PublicPortfolioSkill[]>(),
+      SkillCategory.find({ userId: user._id }).sort({ name: 1 }).lean<PublicPortfolioSkillCategory[]>(),
+    ]);
 
-    const transformedProfile = profile ? (profile as any) : null;
+    const transformedProfile = profile ? { ...profile } : null;
     if (transformedProfile && transformedProfile.resumeUrl) {
       transformedProfile.resumeUrl = getDownloadUrl(transformedProfile.resumeUrl);
     }

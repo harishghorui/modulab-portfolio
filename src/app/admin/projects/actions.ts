@@ -8,7 +8,9 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import mongoose from 'mongoose';
 
-export async function createProject(prevState: any, formData: FormData) {
+export type ProjectActionState = { error?: string } | undefined;
+
+export async function createProject(prevState: ProjectActionState, formData: FormData) {
   const session = await auth();
 
   if (!session?.user?.username) {
@@ -24,14 +26,14 @@ export async function createProject(prevState: any, formData: FormData) {
   const categoryJson = formData.get('category') as string;
   const techStackJson = formData.get('techStack') as string;
   
-  let categoryIds = [];
-  let techStackIds = [];
+  let categoryIds: mongoose.Types.ObjectId[] = [];
+  let techStackIds: mongoose.Types.ObjectId[] = [];
 
   try {
     const rawCategories = categoryJson ? JSON.parse(categoryJson) : [];
     categoryIds = (Array.isArray(rawCategories) ? rawCategories : [rawCategories])
       .map(id => new mongoose.Types.ObjectId(id));
-  } catch (e) {
+  } catch {
     return { error: 'Invalid category data' };
   }
 
@@ -39,7 +41,7 @@ export async function createProject(prevState: any, formData: FormData) {
     const rawTechStack = techStackJson ? JSON.parse(techStackJson) : [];
     techStackIds = (Array.isArray(rawTechStack) ? rawTechStack : [rawTechStack])
       .map(id => new mongoose.Types.ObjectId(id));
-  } catch (e) {
+  } catch {
     return { error: 'Invalid tech stack data' };
   }
 
@@ -82,17 +84,18 @@ export async function createProject(prevState: any, formData: FormData) {
 
     revalidatePath('/admin');
     revalidatePath('/');
-  } catch (error: any) {
-    if (error.code === 11000) {
+  } catch (error: unknown) {
+    const err = error as { code?: number; message?: string };
+    if (err.code === 11000) {
       return { error: 'Slug must be unique' };
     }
-    return { error: error.message || 'Failed to create project' };
+    return { error: err.message || 'Failed to create project' };
   }
 
   redirect('/admin?success=true');
 }
 
-export async function updateProject(projectId: string, prevState: any, formData: FormData) {
+export async function updateProject(projectId: string, prevState: ProjectActionState, formData: FormData) {
   const session = await auth();
 
   if (!session?.user?.username) {
@@ -112,14 +115,14 @@ export async function updateProject(projectId: string, prevState: any, formData:
   const imageUrl = (formData.get('image') as string)?.trim();
   const featured = formData.get('featured') === 'on';
 
-  let categoryIds = [];
-  let techStackIds = [];
+  let categoryIds: mongoose.Types.ObjectId[] = [];
+  let techStackIds: mongoose.Types.ObjectId[] = [];
 
   try {
     const rawCategories = categoryJson ? JSON.parse(categoryJson) : [];
     categoryIds = (Array.isArray(rawCategories) ? rawCategories : [rawCategories])
       .map(id => new mongoose.Types.ObjectId(id));
-  } catch (e) {
+  } catch {
     return { error: 'Invalid category data' };
   }
 
@@ -127,7 +130,7 @@ export async function updateProject(projectId: string, prevState: any, formData:
     const rawTechStack = techStackJson ? JSON.parse(techStackJson) : [];
     techStackIds = (Array.isArray(rawTechStack) ? rawTechStack : [rawTechStack])
       .map(id => new mongoose.Types.ObjectId(id));
-  } catch (e) {
+  } catch {
     return { error: 'Invalid tech stack data' };
   }
 
@@ -166,11 +169,12 @@ export async function updateProject(projectId: string, prevState: any, formData:
     revalidatePath('/admin');
     revalidatePath(`/admin/projects/edit/${projectId}`);
     revalidatePath('/');
-  } catch (error: any) {
-    if (error.code === 11000) {
+  } catch (error: unknown) {
+    const err = error as { code?: number; message?: string };
+    if (err.code === 11000) {
       return { error: 'Slug must be unique' };
     }
-    return { error: error.message || 'Failed to update project' };
+    return { error: err.message || 'Failed to update project' };
   }
 
   redirect('/admin?success=true');
@@ -198,7 +202,8 @@ export async function deleteProject(projectId: string) {
     revalidatePath('/admin/projects');
     revalidatePath('/');
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message || 'Failed to delete project' };
+  } catch (error: unknown) {
+    const err = error as { message?: string };
+    return { error: err.message || 'Failed to delete project' };
   }
 }

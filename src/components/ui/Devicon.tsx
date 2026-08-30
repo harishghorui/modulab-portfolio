@@ -33,6 +33,7 @@ export function Devicon({
   };
 
   return (
+    /* eslint-disable-next-line @next/next/no-img-element -- Devicon loads arbitrary dynamic vector SVGs from external Devicon CDN with DOM-level fallback switching */
     <img
       src={src}
       alt={alt}

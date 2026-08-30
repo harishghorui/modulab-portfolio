@@ -52,8 +52,8 @@ export async function GET(req: NextRequest) {
         'Cache-Control': 'no-cache'
       },
     });
-  } catch (error: any) {
-    console.error('Download proxy error:', error.message);
+  } catch (error: unknown) {
+    console.error('Download proxy error:', error instanceof Error ? error.message : String(error));
     // If proxy fails, redirect to the original URL as a absolute fallback
     return NextResponse.redirect(url);
   }

@@ -36,12 +36,12 @@ export async function POST(req: NextRequest) {
       success: true,
       data: presignData,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Media presign authorization error:', error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to generate upload authorization',
+        error: error instanceof Error ? error.message : 'Failed to generate upload authorization',
       },
       { status: 500 }
     );

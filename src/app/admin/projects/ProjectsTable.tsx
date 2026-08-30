@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   Pencil, 
   Trash2, 
@@ -44,8 +45,8 @@ export default function ProjectsTable({ initialProjects }: ProjectsTableProps) {
         setProjects(projects.filter(p => p._id !== id));
         toast.success('Project deleted successfully');
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete project');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete project');
     } finally {
       setDeletingId(null);
     }
@@ -96,13 +97,13 @@ export default function ProjectsTable({ initialProjects }: ProjectsTableProps) {
                   <tr key={project._id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800">
-                          <img 
-                            src={getOptimizedImageUrl(project.image, { width: 100 })} 
-                            alt={project.title} 
-                            loading="lazy"
+                        <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 relative">
+                          <Image
+                            src={getOptimizedImageUrl(project.image, { width: 100 })}
+                            alt={project.title}
+                            width={48}
+                            height={48}
                             className="w-full h-full object-cover"
-                            referrerPolicy="no-referrer"
                           />
                         </div>
                         <div className="min-w-0">
@@ -114,7 +115,7 @@ export default function ProjectsTable({ initialProjects }: ProjectsTableProps) {
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
                         {project.category && project.category.length > 0 ? (
-                          project.category.map((cat: any) => (
+                          project.category.map((cat: { _id: string; name: string }) => (
                             <span key={cat._id} className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">
                               {cat.name}
                             </span>

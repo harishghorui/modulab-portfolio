@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Globe, 
   Mail, 
   ExternalLink,
   ChevronRight,
@@ -14,15 +13,14 @@ import { Devicon } from '@/components/ui/Devicon';
 import Image from 'next/image';
 import ProjectDetail from '@/components/ProjectDetail';
 import { getDownloadUrl, isPdf, getOptimizedImageUrl } from '@/lib/utils';
+import {
+  PublicPortfolioData,
+  PublicPortfolioProjectCategory,
+  PublicPortfolioSkill,
+} from '@/lib/domains/public-portfolio';
 
 interface PortfolioClientProps {
-  data: {
-    user: any;
-    profile: any;
-    projects: any[];
-    skills: any[];
-    skillCategories: any[];
-  };
+  data: PublicPortfolioData;
 }
 
 const containerVariants = {
@@ -171,7 +169,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
               </motion.div>
 
               <h1 className="text-6xl md:text-8xl font-black tracking-tight mb-8 leading-[0.9]">
-                I'm <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500 dark:from-blue-400 dark:to-indigo-300">{user.firstName}</span>
+                I&apos;m <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500 dark:from-blue-400 dark:to-indigo-300">{user.firstName}</span>
               </h1>
               
               <p className="text-2xl md:text-4xl font-bold text-zinc-800 dark:text-zinc-200 mb-8 leading-tight">
@@ -351,7 +349,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
                 {/* Content Side */}
                 <div className="lg:col-span-5 order-2 lg:order-2 lg:pt-4 h-full flex flex-col">
                   <div className="flex flex-wrap gap-2 mb-8">
-                    {project.category?.map((cat: any) => (
+                    {project.category?.map((cat: PublicPortfolioProjectCategory) => (
                       <span key={cat._id} className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10 px-4 py-1.5 rounded-full border border-blue-100/50 dark:border-blue-900/20">
                         {cat.name}
                       </span>
@@ -413,7 +411,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
 
                   <div className="mt-auto pt-6 border-t border-zinc-100 dark:border-zinc-900 flex items-center justify-between">
                     <div className="flex -space-x-3">
-                      {project.techStack?.map((skill: any) => (
+                      {project.techStack?.map((skill: PublicPortfolioSkill) => (
                         <div key={skill._id} className="group/tech relative w-10 h-10 rounded-full bg-white dark:bg-zinc-800 border-4 border-white dark:border-[#050505] p-2 shadow-sm flex items-center justify-center transition-transform hover:scale-110 hover:z-50" title={skill.name}>
                           <Devicon icon={skill.icon} alt={skill.name} className="w-5 h-5 object-contain" />
                           {/* Minimal Tooltip */}
@@ -528,7 +526,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
                     viewport={{ once: true, amount: 0.2 }}
                     className="flex flex-wrap gap-4 md:gap-6"
                   >
-                    {category.skills.map((skill: any) => (
+                    {category.skills.map((skill: PublicPortfolioSkill) => (
                       <motion.div 
                         key={skill._id}
                         variants={itemVariants}
@@ -581,7 +579,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
               </h2>
               
               <p className="text-xl md:text-2xl text-zinc-400 dark:text-zinc-500 mb-16 max-w-2xl mx-auto font-medium leading-relaxed">
-                I'm currently accepting new projects and would love to hear about yours.
+                I&apos;m currently accepting new projects and would love to hear about yours.
               </p>
               
               <motion.a 

@@ -7,7 +7,7 @@ import SkillCategory from '@/models/SkillCategory';
 import { revalidatePath } from 'next/cache';
 
 // Skill Category Actions
-export async function saveSkillCategory(prevState: any, formData: FormData) {
+export async function saveSkillCategory(prevState: unknown, formData: FormData) {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -39,11 +39,12 @@ export async function saveSkillCategory(prevState: any, formData: FormData) {
 
     revalidatePath('/admin/skills');
     return { success: true, category: JSON.parse(JSON.stringify(category)) };
-  } catch (error: any) {
-    if (error.code === 11000) {
+  } catch (error: unknown) {
+    const err = error as { code?: number; message?: string };
+    if (err.code === 11000) {
       return { error: 'Category name must be unique' };
     }
-    return { error: error.message || 'Failed to save category' };
+    return { error: err.message || 'Failed to save category' };
   }
 }
 
@@ -66,13 +67,14 @@ export async function deleteSkillCategory(id: string) {
     await SkillCategory.findOneAndDelete({ _id: id, userId: session.user.id });
     revalidatePath('/admin/skills');
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message || 'Failed to delete category' };
+  } catch (error: unknown) {
+    const err = error as { message?: string };
+    return { error: err.message || 'Failed to delete category' };
   }
 }
 
 // Skill Actions
-export async function saveSkill(prevState: any, formData: FormData) {
+export async function saveSkill(prevState: unknown, formData: FormData) {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -115,11 +117,12 @@ export async function saveSkill(prevState: any, formData: FormData) {
 
     revalidatePath('/admin/skills');
     return { success: true, skill: JSON.parse(JSON.stringify(skill)) };
-  } catch (error: any) {
-    if (error.code === 11000) {
+  } catch (error: unknown) {
+    const err = error as { code?: number; message?: string };
+    if (err.code === 11000) {
       return { error: 'Skill name must be unique' };
     }
-    return { error: error.message || 'Failed to save skill' };
+    return { error: err.message || 'Failed to save skill' };
   }
 }
 
@@ -136,7 +139,8 @@ export async function deleteSkill(id: string) {
     await Skill.findOneAndDelete({ _id: id, userId: session.user.id });
     revalidatePath('/admin/skills');
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message || 'Failed to delete skill' };
+  } catch (error: unknown) {
+    const err = error as { message?: string };
+    return { error: err.message || 'Failed to delete skill' };
   }
 }

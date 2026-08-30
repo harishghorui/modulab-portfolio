@@ -54,8 +54,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
-        token.firstName = (user as any).firstName;
-        token.username = (user as any).username;
+        token.firstName = user.firstName;
+        token.username = user.username;
       }
       return token;
     },
@@ -72,6 +72,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 });
 
 declare module "next-auth" {
+  interface User {
+    firstName?: string;
+    username?: string;
+  }
   interface Session {
     user: {
       id?: string;
@@ -81,5 +85,12 @@ declare module "next-auth" {
       firstName?: string;
       username?: string;
     };
+  }
+}
+
+declare module "@auth/core/jwt" {
+  interface JWT {
+    firstName?: string;
+    username?: string;
   }
 }

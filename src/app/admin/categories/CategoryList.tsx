@@ -1,8 +1,8 @@
 'use client';
 
-import { useActionState, useState, useEffect, useRef } from 'react';
+import { useState, useRef, useTransition } from 'react';
 import { saveCategory, deleteCategory } from './actions';
-import { Plus, Trash2, Tag, Loader2, AlertCircle, Pencil, X } from 'lucide-react';
+import { Plus, Trash2, Tag, Loader2, Pencil, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { cn } from '@/lib/utils';
@@ -18,46 +18,32 @@ interface CategoryListProps {
 }
 
 export default function CategoryList({ initialCategories }: CategoryListProps) {
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
 
-  const [state, formAction, isPending] = useActionState(
-    saveCategory,
-    { success: false, category: null, error: undefined }
-  );
-
-  const lastProcessedStateRef = useRef(state);
-
-  useEffect(() => {
-    if (state !== lastProcessedStateRef.current) {
-      lastProcessedStateRef.current = state;
-      
-      if (state.success && state.category) {
-        const updatedCategory = state.category;
-        const isEdit = categories.some(c => c._id === updatedCategory._id);
-        
-        toast.success(isEdit ? 'Category updated' : 'Category created');
-
-        setCategories(prev => {
-          if (isEdit) {
-            return prev.map(c => c._id === updatedCategory._id ? updatedCategory : c);
-          } else {
-            return [...prev, updatedCategory];
-          }
-        });
-
-        setEditingCategory(null);
+  const handleFormSubmit = async (formData: FormData) => {
+    startTransition(async () => {
+      const result = await saveCategory(null, formData);
+      if (result?.success && result.category) {
+        toast.success(editingCategory ? 'Category updated' : 'Category created');
+        if (editingCategory) {
+          setCategories(categories.map(c => c._id === result.category._id ? result.category : c));
+          setEditingCategory(null);
+        } else {
+          setCategories([...categories, result.category]);
+        }
         formRef.current?.reset();
+      } else if (result?.error) {
+        toast.error(result.error);
       }
-      if (state.error) {
-        toast.error(state.error);
-      }
-    }
-  }, [state, categories]);
+    });
+  };
 
   const handleDelete = async (id: string) => {
     const result = await deleteCategory(id);
+
     if (result.success) {
       setCategories(categories.filter(c => c._id !== id));
       toast.success('Category deleted');
@@ -71,11 +57,6 @@ export default function CategoryList({ initialCategories }: CategoryListProps) {
 
   const startEditing = (category: Category) => {
     setEditingCategory(category);
-    // Reset state to avoid showing success from previous actions
-    if (state) {
-      state.error = null;
-      state.success = false;
-    }
   };
 
   const cancelEditing = () => {
@@ -100,7 +81,7 @@ export default function CategoryList({ initialCategories }: CategoryListProps) {
         <div className="md:col-span-1">
           <form 
             ref={formRef}
-            action={formAction} 
+            action={handleFormSubmit}
             className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-4 sticky top-10"
           >
             <div className="flex items-center justify-between">

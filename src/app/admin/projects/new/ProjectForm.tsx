@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useState, useEffect } from 'react';
-import { createProject, updateProject } from '../actions';
+import { createProject, updateProject, type ProjectActionState } from '../actions';
 import { 
   LayoutGrid, 
   FileText, 
@@ -26,19 +26,31 @@ import RichTextEditor from '@/components/admin/RichTextEditor';
 import { toast } from 'sonner';
 import { Devicon } from '@/components/ui/Devicon';
 
-const initialState = {
-  error: undefined,
-};
+const initialState: ProjectActionState = undefined;
+
+interface InitialProjectData {
+  _id?: string;
+  title?: string;
+  slug?: string;
+  summary?: string;
+  description?: string;
+  category?: string[];
+  techStack?: string[];
+  liveLink?: string;
+  githubLink?: string;
+  image?: string;
+  featured?: boolean;
+}
 
 interface ProjectFormProps {
   categories: { _id: string; name: string }[];
   skills: { _id: string; name: string; icon: string }[];
-  initialData?: any;
+  initialData?: InitialProjectData;
 }
 
 export default function ProjectForm({ categories, skills, initialData }: ProjectFormProps) {
-  const isEdit = !!initialData;
-  const action = isEdit ? updateProject.bind(null, initialData._id) : createProject;
+  const isEdit = Boolean(initialData?._id);
+  const action = initialData?._id ? updateProject.bind(null, initialData._id) : createProject;
   const [state, formAction, isPending] = useActionState(action, initialState);
   const [localError, setLocalError] = useState<string | null>(null);
   
@@ -131,9 +143,10 @@ export default function ProjectForm({ categories, skills, initialData }: Project
       const result = await uploadDirectToMediaProvider(file, 'project-thumbnail');
       setImageUrl(result.secureUrl);
       toast.success('Image uploaded successfully');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Direct upload failed:', err);
-      setLocalError(err.message || 'Failed to upload image to media provider');
+      const message = err instanceof Error ? err.message : 'Failed to upload image to media provider';
+      setLocalError(message);
       setPreview(initialData?.image || '');
       setImageUrl(initialData?.image || '');
     } finally {
@@ -231,8 +244,9 @@ export default function ProjectForm({ categories, skills, initialData }: Project
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-zinc-800">
               {filteredCategories.length === 0 ? (
                 <div className="col-span-full py-4 text-center text-sm text-gray-500">
-                  No categories found matching "{catSearchQuery}"
+                  No categories found matching &quot;{catSearchQuery}&quot;
                 </div>
+
               ) : (
                 filteredCategories.map((cat) => {
                   const isSelected = selectedCategories.includes(cat._id);
@@ -284,6 +298,7 @@ export default function ProjectForm({ categories, skills, initialData }: Project
                 </div>
               ) : (
                 <div className="relative w-full h-32 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-800">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- Local blob: preview URLs and in-flight uploads cannot be optimized by next/image */}
                   <img 
                     src={preview} 
                     alt="Preview" 
@@ -333,8 +348,9 @@ export default function ProjectForm({ categories, skills, initialData }: Project
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-zinc-800">
               {filteredSkills.length === 0 ? (
                 <div className="col-span-full py-4 text-center text-sm text-gray-500">
-                  No skills found matching "{searchQuery}"
+                  No skills found matching &quot;{searchQuery}&quot;
                 </div>
+
               ) : (
                 filteredSkills.map((skill) => {
                   const isSelected = selectedSkills.includes(skill._id);

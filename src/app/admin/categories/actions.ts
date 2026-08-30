@@ -5,7 +5,7 @@ import dbConnect from '@/lib/db';
 import Category from '@/models/Category';
 import { revalidatePath } from 'next/cache';
 
-export async function saveCategory(prevState: any, formData: FormData) {
+export async function saveCategory(prevState: unknown, formData: FormData) {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -41,11 +41,12 @@ export async function saveCategory(prevState: any, formData: FormData) {
 
     revalidatePath('/admin/categories');
     return { success: true, category: JSON.parse(JSON.stringify(category)) };
-  } catch (error: any) {
-    if (error.code === 11000) {
+  } catch (error: unknown) {
+    const err = error as { code?: number; message?: string };
+    if (err.code === 11000) {
       return { error: 'Category or slug already exists' };
     }
-    return { error: error.message || 'Failed to save category' };
+    return { error: err.message || 'Failed to save category' };
   }
 }
 
@@ -65,7 +66,8 @@ export async function deleteCategory(categoryId: string) {
     });
     revalidatePath('/admin/categories');
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message || 'Failed to delete category' };
+  } catch (error: unknown) {
+    const err = error as { message?: string };
+    return { error: err.message || 'Failed to delete category' };
   }
 }

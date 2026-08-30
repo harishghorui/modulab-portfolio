@@ -1,8 +1,8 @@
 'use client';
 
-import { useActionState, useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useTransition } from 'react';
 import { saveSkill, deleteSkill, saveSkillCategory, deleteSkillCategory } from './actions';
-import { Plus, Trash2, Tag, Loader2, AlertCircle, Pencil, X, Brain, Search, Check } from 'lucide-react';
+import { Plus, Trash2, Tag, Loader2, Pencil, X, Brain, Search, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Devicon } from '@/components/ui/Devicon';
@@ -41,11 +41,13 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
 
   const [searchQuery, setSearchQuery] = useState('');
   const [devicons, setDevicons] = useState<DeviconItem[]>([]);
-  const [filteredIcons, setFilteredIcons] = useState<string[]>([]);
   const [selectedIcon, setSelectedIcon] = useState('');
   const [isColored, setIsColored] = useState(true);
   const [showSuggestions, setShowSuggestions] = useState(false);
   
+  const [catPending, startCatTransition] = useTransition();
+  const [skillPending, startSkillTransition] = useTransition();
+
   const skillFormRef = useRef<HTMLFormElement>(null);
   const categoryFormRef = useRef<HTMLFormElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
@@ -65,10 +67,9 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
   }, []);
 
   // Filter icons based on search
-  useEffect(() => {
+  const filteredIcons = useMemo(() => {
     if (searchQuery.length < 2) {
-      setFilteredIcons([]);
-      return;
+      return [];
     }
 
     const results: string[] = [];
@@ -82,7 +83,7 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
         });
       }
     });
-    setFilteredIcons(results.slice(0, 10));
+    return results.slice(0, 10);
   }, [searchQuery, devicons]);
 
   // Handle clicks outside suggestions
@@ -96,84 +97,55 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Skill Category Action
-  const [catState, catAction, catPending] = useActionState(
-    saveSkillCategory,
-    { success: false, category: null, error: undefined }
-  );
-
-  // Skill Action
-  const [skillState, skillAction, skillPending] = useActionState(
-    saveSkill,
-    { success: false, skill: null, error: undefined }
-  );
-
-  const lastProcessedCatStateRef = useRef(catState);
-  const lastProcessedSkillStateRef = useRef(skillState);
-
-  // Handle Category updates
-  useEffect(() => {
-    if (catState !== lastProcessedCatStateRef.current) {
-      lastProcessedCatStateRef.current = catState;
-      
-      if (catState.success && catState.category) {
-        const updatedCat = catState.category;
+  // Handle Category submit
+  const handleCatSubmit = async (formData: FormData) => {
+    startCatTransition(async () => {
+      const result = await saveSkillCategory(null, formData);
+      if (result?.success && result.category) {
+        const updatedCat = result.category;
         const isEdit = categories.some(c => c._id === updatedCat._id);
-        
         toast.success(isEdit ? 'Category updated' : 'Category added');
-
         setCategories(prev => {
           if (isEdit) return prev.map(c => c._id === updatedCat._id ? updatedCat : c);
           return [...prev, updatedCat];
         });
-        
         setEditingCategory(null);
         categoryFormRef.current?.reset();
+      } else if (result?.error) {
+        toast.error(result.error);
       }
-      if (catState.error) {
-        toast.error(catState.error);
-      }
-    }
-  }, [catState, categories]);
+    });
+  };
 
-  // Handle Skill updates
-  useEffect(() => {
-    if (skillState !== lastProcessedSkillStateRef.current) {
-      lastProcessedSkillStateRef.current = skillState;
-      
-      if (skillState.success && skillState.skill) {
-        const updatedSkill = skillState.skill;
+  // Handle Skill submit
+  const handleSkillSubmit = async (formData: FormData) => {
+    startSkillTransition(async () => {
+      const result = await saveSkill(null, formData);
+      if (result?.success && result.skill) {
+        const updatedSkill = result.skill;
         const isEdit = skills.some(s => s._id === updatedSkill._id);
-
         toast.success(isEdit ? 'Skill updated' : 'Skill added');
-
         setSkills(prev => {
           if (isEdit) return prev.map(s => s._id === updatedSkill._id ? updatedSkill : s);
           return [...prev, updatedSkill];
         });
-
         setEditingSkill(null);
         setSelectedIcon('');
         setSearchQuery('');
         skillFormRef.current?.reset();
+      } else if (result?.error) {
+        toast.error(result.error);
       }
-      if (skillState.error) {
-        toast.error(skillState.error);
-      }
-    }
-  }, [skillState, skills]);
+    });
+  };
 
   const startEditingSkill = (skill: Skill) => {
     setEditingSkill(skill);
     setSelectedIcon(skill.icon.replace(' colored', ''));
     setIsColored(skill.icon.includes('colored'));
     setSearchQuery('');
-    // Reset state to avoid showing success from previous actions
-    if (skillState) {
-      skillState.error = null;
-      skillState.success = false;
-    }
   };
+
 
   const handleDeleteCategory = async (id: string) => {
     const result = await deleteSkillCategory(id);
@@ -217,7 +189,7 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
             <h2 className="text-xl font-bold">Categories</h2>
           </div>
 
-          <form ref={categoryFormRef} action={catAction} className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-4">
+          <form ref={categoryFormRef} action={handleCatSubmit} className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-sm uppercase tracking-wider text-gray-500">
                 {editingCategory ? 'Edit Category' : 'Add New Category'}
@@ -228,13 +200,6 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
                 </button>
               )}
             </div>
-
-            {catState?.error && (
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2 text-red-700 dark:text-red-400 text-xs">
-                <AlertCircle className="w-4 h-4" />
-                <p>{catState.error}</p>
-              </div>
-            )}
 
             {editingCategory && <input type="hidden" name="id" value={editingCategory._id} />}
 
@@ -300,7 +265,7 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
             <h2 className="text-xl font-bold">Skills</h2>
           </div>
 
-          <form ref={skillFormRef} action={skillAction} className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-4">
+          <form ref={skillFormRef} action={handleSkillSubmit} className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-sm uppercase tracking-wider text-gray-500">
                 {editingSkill ? 'Edit Skill' : 'Add New Skill'}
@@ -315,13 +280,6 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
                 </button>
               )}
             </div>
-
-            {skillState?.error && (
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2 text-red-700 dark:text-red-400 text-xs">
-                <AlertCircle className="w-4 h-4" />
-                <p>{skillState.error}</p>
-              </div>
-            )}
 
             {editingSkill && <input type="hidden" name="id" value={editingSkill._id} />}
 

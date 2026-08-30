@@ -1,7 +1,11 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getProfileByUserId, isProfileComplete as checkProfileComplete } from "@/lib/domains/profile";
-import { getCMSDashboardStats } from "@/lib/domains/portfolio";
+import {
+  getCMSDashboardStats,
+  DashboardProjectSummary,
+  DashboardProjectCategory,
+} from "@/lib/domains/portfolio";
 import Link from "next/link";
 import { 
   LayoutGrid, 
@@ -66,8 +70,9 @@ export default async function AdminPage() {
             Welcome back, {session.user.firstName}!
           </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Here's what's happening with your portfolio.
+            Here&apos;s what&apos;s happening with your portfolio.
           </p>
+
         </div>
         <a 
           href={portfolioUrl}
@@ -118,12 +123,12 @@ export default async function AdminPage() {
                 No projects yet. Create your first one!
               </div>
             ) : (
-              latestProjects.map((project: any) => (
+              latestProjects.map((project: DashboardProjectSummary) => (
                 <div key={project._id.toString()} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors first:rounded-t-2xl last:rounded-b-2xl">
                   <div>
                     <div className="font-semibold text-gray-900 dark:text-white">{project.title}</div>
                     <div className="text-xs text-gray-500">
-                      {project.category?.map((c: any) => c.name).join(', ') || 'Uncategorized'}
+                      {project.category?.map((c: DashboardProjectCategory) => c.name).join(', ') || 'Uncategorized'}
                     </div>
                   </div>
                   <div className="text-xs text-gray-400">

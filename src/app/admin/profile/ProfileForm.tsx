@@ -21,12 +21,32 @@ import { cn, isPdf } from '@/lib/utils';
 import { uploadDirectToMediaProvider } from '@/lib/domains/media/client';
 import { toast } from 'sonner';
 
-interface ProfileFormProps {
-  initialData: any;
-  userData: any;
+interface InitialProfileData {
+  headline?: string;
+  bio?: string;
+  image?: string;
+  resumeUrl?: string;
+  socialLinks?: {
+    github?: string;
+    linkedin?: string;
+    twitter?: string;
+    website?: string;
+  };
 }
 
-const initialState = {} as any;
+interface ProfileUserData {
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+}
+
+interface ProfileFormProps {
+  initialData: InitialProfileData | null;
+  userData: ProfileUserData;
+}
+
+const initialState: { success?: boolean; error?: string } = {};
 
 export default function ProfileForm({ initialData, userData }: ProfileFormProps) {
   const router = useRouter();
@@ -98,9 +118,10 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
       const result = await uploadDirectToMediaProvider(file, 'profile-avatar');
       setImageUrl(result.secureUrl);
       toast.success('Profile image uploaded successfully');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Avatar direct upload failed:', err);
-      toast.error(err.message || 'Failed to upload profile image');
+      const message = err instanceof Error ? err.message : 'Failed to upload profile image';
+      toast.error(message);
       setImagePreview(initialData?.image || '');
       setImageUrl(initialData?.image || '');
     } finally {
@@ -147,9 +168,10 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
       setResumeUrl(result.secureUrl);
       setResumePreview(result.secureUrl);
       toast.success('Resume uploaded successfully');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Resume direct upload failed:', err);
-      toast.error(err.message || 'Failed to upload resume document');
+      const message = err instanceof Error ? err.message : 'Failed to upload resume document';
+      toast.error(message);
       setResumeUrl(initialData?.resumeUrl || '');
       setResumePreview(initialData?.resumeUrl || '');
       setResumeFileName('');
@@ -209,8 +231,9 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
       {!initialData && (
         <div className="mb-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center gap-3 text-blue-700 dark:text-blue-400">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm font-medium">Let's set up your profile to get started!</p>
+          <p className="text-sm font-medium">Let&apos;s set up your profile to get started!</p>
         </div>
+
       )}
 
       <form action={formAction} className="space-y-8">
@@ -243,6 +266,7 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                   </div>
                 ) : (
                   <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-white dark:border-zinc-800 shadow-lg group">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- Local blob: avatar preview and in-flight upload cannot be optimized by next/image */}
                     <img 
                       src={imagePreview} 
                       alt="Profile Preview" 

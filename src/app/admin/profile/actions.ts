@@ -7,7 +7,7 @@ import { updateUserIdentity, checkUsernameAvailability as checkIdentityUsernameA
 import { validateAssetReference } from '@/lib/domains/media';
 import { revalidatePath } from 'next/cache';
 
-export async function updateProfile(prevState: any, formData: FormData) {
+export async function updateProfile(prevState: unknown, formData: FormData) {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -105,8 +105,9 @@ export async function updateProfile(prevState: any, formData: FormData) {
     revalidatePath('/');
     
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message || 'Failed to update profile' };
+  } catch (error: unknown) {
+    const err = error as { message?: string };
+    return { error: err.message || 'Failed to update profile' };
   }
 }
 

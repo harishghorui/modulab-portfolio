@@ -23,7 +23,14 @@ interface SidebarProps {
     firstName?: string;
     email?: string | null;
   };
-  profile?: any;
+  profile?: {
+    image?: string;
+    socialLinks?: {
+      github?: string;
+      linkedin?: string;
+      twitter?: string;
+    };
+  } | null;
 }
 
 const navItems = [
@@ -103,7 +110,7 @@ export function AdminSidebar({ user, profile }: SidebarProps) {
         <div className="flex items-center gap-3 px-3 py-2">
           <div className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-600 dark:text-zinc-400">
             {profile?.image ? (
-              <img src={profile.image} alt="" className="w-full h-full object-cover rounded-full" />
+              <Image src={profile.image} alt="User Avatar" width={36} height={36} className="w-full h-full object-cover rounded-full" />
             ) : (
               <User className="w-5 h-5" />
             )}
