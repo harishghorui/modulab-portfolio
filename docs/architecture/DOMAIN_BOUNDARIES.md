@@ -19,7 +19,7 @@ graph TD
     end
 
     subgraph Layer3["3. Public Delivery Layer"]
-        PublicRenderer["Public Portfolio Delivery Engine<br/>(dev.modulab.online/:username)"]
+        PublicRenderer["Public Portfolio Delivery Engine<br/>(portfolio.modulab.online/:username)"]
         PublicQueryBoundary["Public Portfolio Query Boundary<br/>(@/lib/domains/public-portfolio)"]
     end
 

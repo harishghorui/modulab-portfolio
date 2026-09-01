@@ -1,6 +1,6 @@
 # Modulab Portfolio Architecture
 
-> **System Overview**: Comprehensive documentation of the Modulab Portfolio product application (`dev.modulab.online`), its domain boundaries, routing, data ownership, write isolation rules, authentication boundaries, and the planned evolution strategy within the Modulab ecosystem.
+> **System Overview**: Comprehensive documentation of the Modulab Portfolio product application (`portfolio.modulab.online`), its domain boundaries, routing, data ownership, write isolation rules, authentication boundaries, and the planned evolution strategy within the Modulab ecosystem.
 
 ---
 
@@ -12,7 +12,7 @@ graph TD
         PlatformGateway["Modulab Platform Repository (modulab.online)<br/>Brand, Mission, Product Directory"]
     end
 
-    subgraph ProductPortfolio["Modulab Portfolio Repository (dev.modulab.online)"]
+    subgraph ProductPortfolio["Modulab Portfolio Repository (portfolio.modulab.online)"]
         PortfolioLanding["Portfolio Showcase (/)<br/>Product Marketing & Onboarding"]
         PortfolioCMS["Portfolio Studio / CMS (/admin)<br/>Projects, Skills, Categories, Profile"]
         PublicRenderer["Dynamic Portfolio Engine (/[username])<br/>Public Tenant Portfolios"]
@@ -37,7 +37,7 @@ graph TD
 ### Core Terminology & Boundaries
 
 * **Modulab**: The parent brand and umbrella developer platform ("The Operating System for Developers"). Managed in the independent `modulab-platform` repository (`modulab.online`).
-* **Modulab Portfolio**: The premier product application built within the Modulab ecosystem. It is a full-featured, multi-tenant Portfolio CMS and public profile generator hosted in this repository (`modulab-portfolio`) and deployed at `dev.modulab.online`.
+* **Modulab Portfolio**: The premier product application built within the Modulab ecosystem. It is a full-featured, multi-tenant Portfolio CMS and public profile generator hosted in this repository (`modulab-portfolio`) and deployed at `portfolio.modulab.online`.
 * **Current Implementation**: A unified **Modular Monolith** built on Next.js 16 App Router, serving all portfolio product capabilities, admin CMS, dynamic portfolios, authentication, and media integrations.
 
 ---
@@ -214,7 +214,7 @@ graph TD
     IdentityDomain["1. Identity & Authentication<br/>(/api/register, auth.ts, User)"]
     ProfileDomain["2. Developer Profile<br/>(/admin/profile, Profile)"]
     CMSDomain["3. Portfolio Content CMS<br/>(/admin/*, Project, Skill, Category)"]
-    PublicDelivery["4. Public Portfolio Delivery<br/>(dev.modulab.online/:username)"]
+    PublicDelivery["4. Public Portfolio Delivery<br/>(portfolio.modulab.online/:username)"]
     PublicQueryBoundary["Public Portfolio Query Boundary<br/>(@/lib/domains/public-portfolio)"]
     MediaPipeline["5. Media & Asset Pipeline<br/>(Cloudinary, /api/download)"]
 
@@ -308,7 +308,7 @@ flowchart TD
 
     subgraph Phase2["Phase 2: Independent Product Repositories (Current)"]
         RepoPlatform["modulab-platform (modulab.online)"]
-        RepoPortfolio["modulab-portfolio (dev.modulab.online)"]
+        RepoPortfolio["modulab-portfolio (portfolio.modulab.online)"]
         RepoFuture["future products (e.g. docs.modulab.online)"]
     end
 
@@ -339,7 +339,7 @@ flowchart TD
 
 ## 8. Architectural Constraints & Invariants
 
-1. **Portfolio Independence**: Public user portfolios must remain served at `dev.modulab.online/[username]` without path prefix collisions.
+1. **Portfolio Independence**: Public user portfolios must remain served at `portfolio.modulab.online/[username]` without path prefix collisions.
 2. **Deterministic Hydration**: All dates rendered across server and client components must format with explicit `timeZone: 'UTC'` using [`formatDate`](file:///home/harish/Harish/Git/Modulab/src/lib/utils.ts#L28-L37).
 3. **Data Integrity**: Database model names (`User`, `Profile`, `Project`, `Skill`, `Category`, `SkillCategory`) and Cloudinary storage paths (`Modulab/...`) must remain stable to prevent breaking existing data.
 4. **Standard API Response Format**: All route handlers and server actions must conform to `{ success: boolean, data?: any, error?: string }`.

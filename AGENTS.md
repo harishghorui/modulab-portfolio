@@ -6,7 +6,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Modulab Portfolio — Developer Guide
 
-This repository (`modulab-portfolio`) houses the Portfolio product module (`dev.modulab.online`). The Platform marketing gateway (`modulab.online`) lives in the separate `modulab-platform` repository.
+This repository (`modulab-portfolio`) houses the Portfolio product module (`portfolio.modulab.online`). The Platform marketing gateway (`modulab.online`) lives in the separate `modulab-platform` repository.
 
 ## Key Invariants
 - **Domain Boundaries**: Follow domain encapsulation in `src/lib/domains/`. Only the owning domain may mutate its Mongoose model.

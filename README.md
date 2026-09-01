@@ -2,7 +2,7 @@
 
 Modulab Portfolio is a high-performance, multi-tenant Portfolio CMS and dynamic profile platform — the premier product module within the Modulab developer ecosystem.
 
-- **Production Domain:** `dev.modulab.online`
+- **Production Domain:** `portfolio.modulab.online`
 - **Platform Gateway:** `modulab.online` (managed in `modulab-platform` repository)
 
 ## 🚀 Architecture
@@ -92,7 +92,7 @@ src/
 | Repository | Domain | Responsibility |
 | :--- | :--- | :--- |
 | **`modulab-platform`** | `modulab.online` | Brand landing, ecosystem overview, product discovery |
-| **`modulab-portfolio`** | `dev.modulab.online` | Portfolio CMS, admin studio, dynamic public portfolios |
+| **`modulab-portfolio`** | `portfolio.modulab.online` | Portfolio CMS, admin studio, dynamic public portfolios |
 
 ## 📄 License
 

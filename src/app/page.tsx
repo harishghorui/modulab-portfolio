@@ -228,7 +228,7 @@ export default function PortfolioProductPage() {
           </div>
 
           <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600">
-            &copy; {new Date().getFullYear()} Modulab Dev. All Rights Reserved.
+            &copy; {new Date().getFullYear()} Modulab Portfolio. All Rights Reserved.
           </div>
         </div>
       </footer>

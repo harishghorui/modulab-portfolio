@@ -259,3 +259,27 @@ As the platform moves toward independent product deployment and lifecycle separa
   - Avoids premature microservice or monorepo tooling overhead.
 * **Negative**:
   - Small branding assets (logos, favicons) are duplicated across repositories until shared package extraction is justified.
+
+---
+
+## ADR-012: Production Portfolio Domain Migration to `portfolio.modulab.online`
+
+### Status
+**Accepted**
+
+### Context
+Following the repository separation, the Portfolio product was initially deployed at `dev.modulab.online`. However, naming conventions dictate that the `dev.` subdomain is better suited for future staging/development environments, while product-specific subdomains (`portfolio.modulab.online`, `docs.modulab.online`) should represent production services.
+
+### Decision
+1. **Target Production Domain**: Migrate the canonical Portfolio production domain to `portfolio.modulab.online`.
+2. **Reserve `dev.` Subdomain**: Reserve `dev.modulab.online` for future staging / development branch preview deployments.
+3. **Seamless Backward Compatibility**: Configure a 308 permanent domain redirect from `dev.modulab.online` to `portfolio.modulab.online` during the transition period to ensure existing public developer portfolios (e.g. `dev.modulab.online/:username`) and bookmarks continue functioning.
+4. **Environment-Driven URLs**: Continue managing cross-product URLs via `NEXT_PUBLIC_PORTFOLIO_URL` across both repositories without hardcoded domain couplings.
+
+### Consequences
+* **Positive**:
+  - Clear product-centric domain taxonomy (`portfolio.modulab.online`).
+  - Frees `dev.modulab.online` to serve as the unified development/staging environment for the Modulab ecosystem.
+  - Zero downtime and full link preservation via Vercel 308 domain redirection.
+* **Negative**:
+  - Requires updating documentation, environment variables, and DNS records.

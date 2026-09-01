@@ -6,6 +6,7 @@ import {
   DashboardProjectSummary,
   DashboardProjectCategory,
 } from "@/lib/domains/portfolio";
+import { siteConfig } from "@/config/site";
 import Link from "next/link";
 import { 
   LayoutGrid, 
@@ -57,7 +58,7 @@ export default async function AdminPage() {
     }
   ];
 
-  const portfolioBaseUrl = process.env.NEXT_PUBLIC_PORTFOLIO_URL || (process.env.NODE_ENV === "production" ? "https://dev.modulab.online" : "http://dev.localhost:3000");
+  const portfolioBaseUrl = siteConfig.url;
   const portfolioUrl = `${portfolioBaseUrl.replace(/\/$/, '')}/${session.user.username || ''}`;
 
 
