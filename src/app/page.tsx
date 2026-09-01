@@ -35,15 +35,18 @@ export default function PortfolioProductPage() {
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-xl">
         <div className="container max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex flex-col items-start group">
             <Image
               src="/branding/logo-full.png"
               alt="Modulab"
               width={240}
               height={64}
               priority
-              className="h-12 w-auto"
+              className="h-10 w-auto"
             />
+            <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-zinc-400 pl-1 self-center">
+              Portfolio
+            </span>
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
             <a href="#features" className="hover:text-white transition-colors">Features</a>
@@ -86,12 +89,13 @@ export default function PortfolioProductPage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>
               <a
-                href="https://github.com"
+                href="https://github.com/harishghorui/modulab-portfolio"
                 target="_blank"
+                rel="noopener noreferrer"
                 className="px-10 py-5 bg-zinc-900 border border-white/10 rounded-[20px] font-black text-lg hover:bg-zinc-800 transition-all flex items-center gap-3"
               >
                 <FaGithub className="w-6 h-6" />
-                Star on GitHub
+                Source Code
               </a>
             </div>
           </motion.div>
@@ -209,19 +213,27 @@ export default function PortfolioProductPage() {
       {/* Footer */}
       <footer className="py-12 px-6 border-t border-white/5">
         <div className="container max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-          <Link href="/" className="flex items-center opacity-80 hover:opacity-100 transition-opacity">
+          <Link href="/" className="flex flex-col items-start opacity-80 hover:opacity-100 transition-opacity">
             <Image
               src="/branding/logo-full.png"
               alt="Modulab"
               width={180}
               height={52}
-              className="h-10 w-auto"
+              className="h-5 w-auto"
             />
+            <span className="text-[9px] font-bold uppercase tracking-[0.28em] text-zinc-500">
+              Portfolio
+            </span>
           </Link>
 
           <div className="flex items-center gap-10 text-xs font-black uppercase tracking-widest text-zinc-500">
             <a href={loginUrl} className="hover:text-white transition-colors">Admin Dashboard</a>
-            <a href="https://github.com" target="_blank" className="flex items-center gap-2 hover:text-white transition-colors">
+            <a
+              href="https://github.com/harishghorui"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 hover:text-white transition-colors"
+            >
               <FaGithub className="w-4 h-4" />
               Personal GitHub
             </a>

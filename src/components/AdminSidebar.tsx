@@ -68,15 +68,18 @@ export function AdminSidebar({ user, profile }: SidebarProps) {
 
   return (
     <aside className="w-64 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 flex flex-col h-screen sticky top-0">
-      <Link href="/admin" className="flex items-center pl-6 py-3">
+      <Link href="/admin" className="flex flex-col items-start px-6 py-4">
         <Image
           src="/branding/logo-full.png"
           alt="Modulab"
           width={220}
           height={72}
           priority
-          className="h-14 w-auto"
+          className="h-11 w-auto"
         />
+        <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-zinc-500 dark:text-zinc-400 pl-2">
+          Portfolio
+        </span>
       </Link>
 
       <nav className="flex-1 px-4 space-y-1">
