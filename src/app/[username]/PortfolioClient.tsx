@@ -1,12 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import { 
   Mail, 
   ExternalLink,
   ChevronRight,
-  FileDown
+  FileDown,
+  ArrowRight,
+  Menu,
+  X
 } from 'lucide-react';
 import { FaGithub, FaLinkedin, FaTwitter } from 'react-icons/fa';
 import { Devicon } from '@/components/ui/Devicon';
@@ -53,6 +57,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
   const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const projectsPerPage = 3;
 
   useEffect(() => {
@@ -78,7 +83,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
   
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    const projectsSection = document.getElementById('projects');
+    const projectsSection = document.getElementById('work') || document.getElementById('projects');
     if (projectsSection) {
       const offset = 80; // Account for fixed nav
       const bodyRect = document.body.getBoundingClientRect().top;
@@ -100,6 +105,32 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
     ...cat,
     skills: skills.filter(s => s.category?._id === cat._id)
   })).filter(cat => cat.skills.length > 0);
+
+  // Available portfolio sections navigation
+  const navLinks = [
+    { label: 'Work', href: '#work', show: projects.length > 0 },
+    { label: 'Tech Stack', href: '#skills', show: groupedSkills.length > 0 },
+    { label: 'About', href: '#about', show: true },
+  ].filter(link => link.show);
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    setMobileNavOpen(false);
+    const targetId = href.replace('#', '');
+    const targetElement = document.getElementById(targetId);
+    if (targetElement) {
+      const navOffset = 70;
+      const bodyRect = document.body.getBoundingClientRect().top;
+      const elementRect = targetElement.getBoundingClientRect().top;
+      const elementPosition = elementRect - bodyRect;
+      const offsetPosition = elementPosition - navOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   // Ensure resume URL has fl_attachment for direct download
   const resumeDownloadUrl = profile?.resumeUrl ? getDownloadUrl(profile.resumeUrl) : '';
@@ -138,8 +169,120 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#050505] text-zinc-900 dark:text-zinc-100 selection:bg-blue-100 dark:selection:bg-blue-900/30">
+      {/* Public Portfolio Dedicated Navbar */}
+      <header className="fixed top-0 left-0 right-0 w-full z-50 bg-white/85 dark:bg-[#050505]/85 backdrop-blur-xl border-b border-zinc-200/80 dark:border-zinc-800/80 transition-colors">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          {/* Brand Logo on Left */}
+          <Link href="/" className="flex flex-col items-start group" aria-label="Modulab Portfolio Home">
+            <Image
+              src="/branding/logo-full.png"
+              alt="Modulab"
+              width={110}
+              height={28}
+              priority
+              className="h-5 sm:h-5.5 w-auto"
+            />
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.28em] text-zinc-500 dark:text-zinc-400">
+              Portfolio
+            </span>
+          </Link>
+
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-8">
+            {navLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                onClick={(e) => handleNavClick(e, link.href)}
+                className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-white transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center gap-3">
+            {resumeDownloadUrl && (
+              <button
+                onClick={handleDownload}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-bold text-zinc-800 dark:text-zinc-200 transition-colors shadow-2xs cursor-pointer"
+              >
+                <FileDown className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Resume</span>
+              </button>
+            )}
+            <a
+              href="#contact"
+              onClick={(e) => handleNavClick(e, '#contact')}
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors"
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>Contact</span>
+            </a>
+          </div>
+
+          {/* Mobile Hamburger Button */}
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(!mobileNavOpen)}
+            className="md:hidden p-2 rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            aria-label={mobileNavOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={mobileNavOpen}
+          >
+            {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+
+        {/* Mobile Dropdown Menu */}
+        <AnimatePresence>
+          {mobileNavOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl px-4 py-4 space-y-1"
+            >
+              {navLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  onClick={(e) => handleNavClick(e, link.href)}
+                  className="block px-3 py-2.5 rounded-lg text-sm font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-blue-600 dark:hover:text-white transition-colors"
+                >
+                  {link.label}
+                </a>
+              ))}
+              <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800 flex flex-col gap-2">
+                {resumeDownloadUrl && (
+                  <button
+                    onClick={() => {
+                      setMobileNavOpen(false);
+                      handleDownload();
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-800 dark:text-zinc-200 cursor-pointer"
+                  >
+                    <FileDown className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span>Download Resume</span>
+                  </button>
+                )}
+                <a
+                  href="#contact"
+                  onClick={(e) => handleNavClick(e, '#contact')}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-blue-600 text-white text-xs font-bold shadow-xs"
+                >
+                  <Mail className="w-4 h-4" />
+                  <span>Contact Me</span>
+                </a>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </header>
+
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center px-6 py-20 overflow-hidden">
+      <section id="about" className="relative min-h-screen flex items-center justify-center px-6 pt-24 pb-20 overflow-hidden scroll-mt-16">
         {/* Decorative background elements */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[120px] animate-pulse" />
@@ -182,8 +325,9 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
               </p>
               
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-6">
-                <motion.a 
-                  href="#projects" 
+                <motion.a
+                  href="#work"
+                  onClick={(e) => handleNavClick(e, '#work')}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
                   className="px-10 py-5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-[20px] font-black text-lg shadow-2xl shadow-zinc-400/20 dark:shadow-none transition-all flex items-center gap-3"
@@ -272,7 +416,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
       </section>
 
       {/* Projects Grid */}
-      <section id="projects" className="py-32 px-6">
+      <section id="work" className="py-32 px-6 scroll-mt-16">
         <div className="container max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-baseline justify-between mb-24 gap-8">
             <div className="relative">
@@ -410,6 +554,37 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
                     </motion.div>
                   </div>
 
+                  {/* Project Action Links (Always accessible, never dependent on hover) */}
+                  {(project.liveLink || project.githubLink) && (
+                    <div className="flex flex-wrap items-center gap-3 my-4">
+                      {project.liveLink && (
+                        <a
+                          href={project.liveLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition-all hover:gap-2.5 active:scale-95 cursor-pointer"
+                          aria-label={`View live demo of ${project.title}`}
+                        >
+                          <span>View Live</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                      {project.githubLink && (
+                        <a
+                          href={project.githubLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 font-bold text-xs uppercase tracking-wider transition-all active:scale-95 cursor-pointer"
+                          aria-label={`View source code of ${project.title} on GitHub`}
+                        >
+                          <FaGithub className="w-3.5 h-3.5" />
+                          <span>GitHub</span>
+                          <ExternalLink className="w-3 h-3 text-zinc-400" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+
                   <div className="mt-auto pt-6 border-t border-zinc-100 dark:border-zinc-900 flex items-center justify-between">
                     <div className="flex -space-x-3">
                       {project.techStack?.map((skill: PublicPortfolioSkill) => (
@@ -470,7 +645,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
       </section>
 
       {/* Skills Section */}
-      <section className="py-32 px-6 relative overflow-hidden bg-white dark:bg-[#050505]">
+      <section id="skills" className="py-32 px-6 relative overflow-hidden bg-white dark:bg-[#050505] scroll-mt-16">
         {/* Subtle grid background for technical feel */}
         <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] [background-size:40px_40px]" />
         
@@ -563,61 +738,87 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
       </section>
 
       {/* Contact Footer */}
-      <footer className="py-32 px-6">
-        <div className="container max-w-6xl mx-auto text-center">
+      <footer id="contact" className="py-16 sm:py-24 px-4 sm:px-6 scroll-mt-16">
+        <div className="container max-w-5xl mx-auto text-center">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-zinc-900 dark:bg-white rounded-[60px] p-12 md:p-24 text-white dark:text-zinc-900 relative overflow-hidden"
+            className="bg-zinc-900 dark:bg-white rounded-3xl sm:rounded-[40px] p-8 sm:p-12 md:p-16 text-white dark:text-zinc-900 relative overflow-hidden shadow-2xl border border-zinc-800 dark:border-zinc-200"
           >
             {/* Background pattern */}
-            <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#fff_1px,transparent_1px)] dark:bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:20px_20px]" />
+            <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#fff_1px,transparent_1px)] dark:bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
             
-            <div className="relative z-10">
-              <h2 className="text-5xl md:text-8xl font-black tracking-tighter mb-10 leading-none">
-                Start a <span className="text-blue-500">project</span>.
+            <div className="relative z-10 max-w-2xl mx-auto">
+              <span className="inline-block px-3.5 py-1 rounded-full bg-white/10 dark:bg-zinc-900/10 text-blue-400 dark:text-blue-600 text-[10px] font-bold uppercase tracking-widest mb-4 border border-white/10 dark:border-zinc-900/10">
+                Get In Touch
+              </span>
+
+              <h2 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight mb-4 leading-tight">
+                Let&apos;s build something <span className="text-blue-500 dark:text-blue-600">exceptional</span>.
               </h2>
               
-              <p className="text-xl md:text-2xl text-zinc-400 dark:text-zinc-500 mb-16 max-w-2xl mx-auto font-medium leading-relaxed">
-                I&apos;m currently accepting new projects and would love to hear about yours.
+              <p className="text-sm sm:text-base md:text-lg text-zinc-400 dark:text-zinc-600 mb-8 max-w-lg mx-auto font-normal leading-relaxed">
+                I&apos;m currently accepting new opportunities and project inquiries. Feel free to reach out anytime.
               </p>
               
-              <motion.a 
-                href={`mailto:${user.email}`} 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center gap-4 px-12 py-6 bg-blue-600 text-white rounded-[28px] font-black text-xl shadow-[0_20px_50px_rgba(37,99,235,0.3)] transition-all"
-              >
-                <Mail className="w-7 h-7" />
-                Say Hello
-              </motion.a>
-
-              <div className="mt-24 flex flex-wrap items-center justify-center gap-10">
-                {profile?.socialLinks?.github && (
-                  <a href={profile.socialLinks.github} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white dark:hover:text-black transition-all transform hover:scale-125">
-                    <FaGithub className="w-8 h-8" />
-                  </a>
-                )}
-                {profile?.socialLinks?.linkedin && (
-                  <a href={profile.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white dark:hover:text-black transition-all transform hover:scale-125">
-                    <FaLinkedin className="w-8 h-8" />
-                  </a>
-                )}
-                {profile?.socialLinks?.twitter && (
-                  <a href={profile.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white dark:hover:text-black transition-all transform hover:scale-125">
-                    <FaTwitter className="w-8 h-8" />
-                  </a>
-                )}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <motion.a
+                  href={`mailto:${user.email}`}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm sm:text-base shadow-lg shadow-blue-500/25 transition-all"
+                >
+                  <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span>Say Hello</span>
+                </motion.a>
               </div>
+
+              {(profile?.socialLinks?.github || profile?.socialLinks?.linkedin || profile?.socialLinks?.twitter) && (
+                <div className="mt-8 sm:mt-10 pt-6 border-t border-white/10 dark:border-zinc-200/80 flex flex-wrap items-center justify-center gap-6">
+                  {profile?.socialLinks?.github && (
+                    <a
+                      href={profile.socialLinks.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-zinc-400 hover:text-white dark:text-zinc-500 dark:hover:text-black transition-colors"
+                      aria-label="GitHub Profile"
+                    >
+                      <FaGithub className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </a>
+                  )}
+                  {profile?.socialLinks?.linkedin && (
+                    <a
+                      href={profile.socialLinks.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-zinc-400 hover:text-[#0077b5] dark:text-zinc-500 dark:hover:text-[#0077b5] transition-colors"
+                      aria-label="LinkedIn Profile"
+                    >
+                      <FaLinkedin className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </a>
+                  )}
+                  {profile?.socialLinks?.twitter && (
+                    <a
+                      href={profile.socialLinks.twitter}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-zinc-400 hover:text-[#1da1f2] dark:text-zinc-500 dark:hover:text-[#1da1f2] transition-colors"
+                      aria-label="Twitter Profile"
+                    >
+                      <FaTwitter className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </motion.div>
           
-          <div className="mt-20 flex flex-col md:flex-row items-center justify-between gap-6 px-4 text-zinc-400 dark:text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em]">
+          <div className="mt-12 sm:mt-16 flex flex-col sm:flex-row items-center justify-between gap-4 px-2 text-zinc-400 dark:text-zinc-500 text-xs font-semibold">
             <div>&copy; {new Date().getFullYear()} {fullName}</div>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
               <a href="#" className="hover:text-blue-600 transition-colors">Back to top</a>
-              <span className="w-1 h-1 bg-zinc-800 rounded-full" />
+              <span className="w-1 h-1 bg-zinc-400 dark:bg-zinc-600 rounded-full" />
               <span>Built with <a href={siteConfig.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-bold">Modulab Portfolio</a></span>
             </div>
           </div>
