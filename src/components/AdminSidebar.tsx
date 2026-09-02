@@ -13,6 +13,7 @@ import {
   User,
   Tag,
   Brain,
+  ShieldCheck,
   Menu,
   X
 } from 'lucide-react';
@@ -61,6 +62,11 @@ const navItems = [
     title: 'Profile Settings',
     href: '/admin/profile',
     icon: UserCircle,
+  },
+  {
+    title: 'Security',
+    href: '/admin/security',
+    icon: ShieldCheck,
   },
 ];
 
