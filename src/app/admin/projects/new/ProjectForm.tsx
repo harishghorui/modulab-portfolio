@@ -2,21 +2,21 @@
 
 import { useActionState, useState, useEffect } from 'react';
 import { createProject, updateProject, type ProjectActionState } from '../actions';
-import { 
-  LayoutGrid, 
-  FileText, 
-  Image as ImageIcon, 
-  Globe, 
-  Tag, 
-  Save, 
-  ArrowLeft, 
-  Loader2, 
-  Upload, 
-  X, 
-  Brain, 
-  Search, 
+import {
+  LayoutGrid,
+  FileText,
+  Image as ImageIcon,
+  Globe,
+  Tag,
+  Save,
+  ArrowLeft,
+  Loader2,
+  Upload,
+  X,
+  Brain,
+  Search,
   Check,
-  AlertCircle 
+  AlertCircle
 } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa';
 import Link from 'next/link';
@@ -53,7 +53,7 @@ export default function ProjectForm({ categories, skills, initialData }: Project
   const action = initialData?._id ? updateProject.bind(null, initialData._id) : createProject;
   const [state, formAction, isPending] = useActionState(action, initialState);
   const [localError, setLocalError] = useState<string | null>(null);
-  
+
   const [imageUrl, setImageUrl] = useState<string>(initialData?.image || '');
   const [preview, setPreview] = useState<string>(initialData?.image || '');
   const [isUploading, setIsUploading] = useState<boolean>(false);
@@ -72,7 +72,7 @@ export default function ProjectForm({ categories, skills, initialData }: Project
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     setLocalError(null);
-    
+
     let hasError = false;
     if (isUploading) {
       setLocalError('Image is still uploading. Please wait a moment.');
@@ -98,26 +98,26 @@ export default function ProjectForm({ categories, skills, initialData }: Project
   };
 
   const toggleSkill = (skillId: string) => {
-    setSelectedSkills(prev => 
-      prev.includes(skillId) 
-        ? prev.filter(id => id !== skillId) 
+    setSelectedSkills(prev =>
+      prev.includes(skillId)
+        ? prev.filter(id => id !== skillId)
         : [...prev, skillId]
     );
   };
 
   const toggleCategory = (catId: string) => {
-    setSelectedCategories(prev => 
-      prev.includes(catId) 
-        ? prev.filter(id => id !== catId) 
+    setSelectedCategories(prev =>
+      prev.includes(catId)
+        ? prev.filter(id => id !== catId)
         : [...prev, catId]
     );
   };
 
-  const filteredSkills = skills.filter(skill => 
+  const filteredSkills = skills.filter(skill =>
     skill.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredCategories = categories.filter(cat => 
+  const filteredCategories = categories.filter(cat =>
     cat.name.toLowerCase().includes(catSearchQuery.toLowerCase())
   );
 
@@ -160,19 +160,19 @@ export default function ProjectForm({ categories, skills, initialData }: Project
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-6">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="max-w-4xl mx-auto py-4 sm:py-8">
+      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <LayoutGrid className="w-8 h-8 text-blue-600" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <LayoutGrid className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
             {isEdit ? 'Update Project' : 'Add New Project'}
           </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
             {isEdit ? 'Update your project details.' : 'Create a new showcase for your portfolio.'}
           </p>
         </div>
-        <Link 
-          href="/admin" 
+        <Link
+          href="/admin"
           className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -180,7 +180,7 @@ export default function ProjectForm({ categories, skills, initialData }: Project
         </Link>
       </div>
 
-      <form action={formAction} onSubmit={handleSubmit} className="space-y-8 bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm">
+      <form action={formAction} onSubmit={handleSubmit} className="space-y-6 sm:space-y-8 bg-white dark:bg-zinc-900 p-4 sm:p-8 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm">
         {(localError || state?.error) && (
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-3 text-red-700 dark:text-red-400">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -227,7 +227,7 @@ export default function ProjectForm({ categories, skills, initialData }: Project
               <LayoutGrid className="w-4 h-4 text-gray-500" />
               Project Categories <span className="text-red-500">*</span> (Selected {selectedCategories.length})
             </label>
-            
+
             <div className="relative">
               <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400" />
@@ -241,7 +241,7 @@ export default function ProjectForm({ categories, skills, initialData }: Project
               />
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-zinc-800">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 max-h-48 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-zinc-800">
               {filteredCategories.length === 0 ? (
                 <div className="col-span-full py-4 text-center text-sm text-gray-500">
                   No categories found matching &quot;{catSearchQuery}&quot;
@@ -299,9 +299,9 @@ export default function ProjectForm({ categories, skills, initialData }: Project
               ) : (
                 <div className="relative w-full h-32 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-800">
                   {/* eslint-disable-next-line @next/next/no-img-element -- Local blob: preview URLs and in-flight uploads cannot be optimized by next/image */}
-                  <img 
-                    src={preview} 
-                    alt="Preview" 
+                  <img
+                    src={preview}
+                    alt="Preview"
                     className={cn("w-full h-full object-cover", isUploading && "opacity-50")}
                     referrerPolicy="no-referrer"
                   />
@@ -331,7 +331,7 @@ export default function ProjectForm({ categories, skills, initialData }: Project
               <Brain className="w-4 h-4 text-gray-500" />
               Tech Stack <span className="text-red-500">*</span> (Selected {selectedSkills.length})
             </label>
-            
+
             <div className="relative">
               <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400" />
@@ -345,7 +345,7 @@ export default function ProjectForm({ categories, skills, initialData }: Project
               />
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-zinc-800">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 max-h-60 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-zinc-800">
               {filteredSkills.length === 0 ? (
                 <div className="col-span-full py-4 text-center text-sm text-gray-500">
                   No skills found matching &quot;{searchQuery}&quot;
@@ -380,7 +380,7 @@ export default function ProjectForm({ categories, skills, initialData }: Project
                 })
               )}
             </div>
-            
+
             {/* Selected Skills Pills */}
             {selectedSkills.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-2">
@@ -425,9 +425,9 @@ export default function ProjectForm({ categories, skills, initialData }: Project
               <FileText className="w-4 h-4 text-gray-500" />
               Detailed Description <span className="text-red-500">*</span>
             </label>
-            <RichTextEditor 
-              content={description} 
-              onChange={setDescription} 
+            <RichTextEditor
+              content={description}
+              onChange={setDescription}
               placeholder="Explain what the project is about..."
             />
             <input type="hidden" name="description" value={description} />
@@ -477,11 +477,11 @@ export default function ProjectForm({ categories, skills, initialData }: Project
           </div>
         </div>
 
-        <div className="pt-4 flex gap-4">
+        <div className="pt-4 flex flex-col sm:flex-row gap-3 sm:gap-4">
           <button
             type="submit"
             disabled={isPending || isUploading}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
+            className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
           >
             {isPending || isUploading ? (
               <>
@@ -497,7 +497,7 @@ export default function ProjectForm({ categories, skills, initialData }: Project
           </button>
           <Link
             href="/admin"
-            className="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-900 dark:text-white font-bold py-3 px-6 rounded-lg transition-all flex items-center justify-center"
+            className="w-full sm:flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-900 dark:text-white font-bold py-3 px-6 rounded-lg transition-all flex items-center justify-center"
           >
             Cancel
           </Link>

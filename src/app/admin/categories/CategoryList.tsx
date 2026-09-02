@@ -65,35 +65,35 @@ export default function CategoryList({ initialCategories }: CategoryListProps) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <Tag className="w-8 h-8 text-blue-600" />
+    <div className="max-w-4xl mx-auto py-4 sm:py-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <Tag className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
           Project Categories
         </h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
+        <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Manage dynamic categories for your projects.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         {/* Category Form (Add or Edit) */}
         <div className="md:col-span-1">
-          <form 
+          <form
             ref={formRef}
             action={handleFormSubmit}
-            className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-4 sticky top-10"
+            className="bg-white dark:bg-zinc-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-4 md:sticky md:top-6"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2">
                 {editingCategory ? (
                   <>
-                    <Pencil className="w-5 h-5" />
+                    <Pencil className="w-4 h-4 sm:w-5 sm:h-5" />
                     Edit Category
                   </>
                 ) : (
                   <>
-                    <Plus className="w-5 h-5" />
+                    <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                     Add Category
                   </>
                 )}
@@ -146,7 +146,7 @@ export default function CategoryList({ initialCategories }: CategoryListProps) {
             <button
               type="submit"
               disabled={isPending}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all flex items-center justify-center gap-2 text-sm"
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition-all flex items-center justify-center gap-2 text-sm"
             >
               {isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -160,63 +160,65 @@ export default function CategoryList({ initialCategories }: CategoryListProps) {
 
         {/* Categories List */}
         <div className="md:col-span-2">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-            <table className="w-full text-left">
-              <thead className="bg-gray-50 dark:bg-zinc-800/50">
-                <tr>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Slug</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
-                {categories.length === 0 ? (
+          <div className="bg-white dark:bg-zinc-900 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left min-w-[280px]">
+                <thead className="bg-gray-50 dark:bg-zinc-800/50">
                   <tr>
-                    <td colSpan={3} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
-                      No categories found. Add one above!
-                    </td>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Slug</th>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
                   </tr>
-                ) : (
-                  categories.map((category) => (
-                    <tr key={category._id} className={cn(
-                      "hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors",
-                      editingCategory?._id === category._id && "bg-blue-50 dark:bg-blue-900/10"
-                    )}>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                        {category.name}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                        {category.slug}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => startEditing(category)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                            title="Edit Category"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <ConfirmDialog
-                            trigger={
-                              <button
-                                className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                title="Delete Category"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            }
-                            title="Delete Category?"
-                            description={`Are you sure you want to delete "${category.name}"? This action cannot be undone.`}
-                            onConfirm={() => handleDelete(category._id)}
-                          />
-                        </div>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
+                  {categories.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="px-4 sm:px-6 py-8 sm:py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                        No categories found. Add one above!
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    categories.map((category) => (
+                      <tr key={category._id} className={cn(
+                        "hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors",
+                        editingCategory?._id === category._id && "bg-blue-50 dark:bg-blue-900/10"
+                      )}>
+                        <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium text-gray-900 dark:text-white">
+                          {category.name}
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400">
+                          {category.slug}
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
+                          <div className="flex items-center justify-end gap-1 sm:gap-2">
+                            <button
+                              onClick={() => startEditing(category)}
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                              title="Edit Category"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            <ConfirmDialog
+                              trigger={
+                                <button
+                                  className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                  title="Delete Category"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              }
+                              title="Delete Category?"
+                              description={`Are you sure you want to delete "${category.name}"? This action cannot be undone.`}
+                              onConfirm={() => handleDelete(category._id)}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

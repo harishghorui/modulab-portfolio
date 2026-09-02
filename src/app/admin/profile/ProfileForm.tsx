@@ -3,13 +3,13 @@
 import { useActionState, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateProfile, checkUsernameAvailability } from './actions';
-import { 
-  User, 
-  Briefcase, 
-  FileText, 
-  Globe, 
-  Save, 
-  Loader2, 
+import {
+  User,
+  Briefcase,
+  FileText,
+  Globe,
+  Save,
+  Loader2,
   AlertCircle,
   Image as ImageIcon,
   FileDown,
@@ -20,6 +20,7 @@ import { FaGithub, FaLinkedin, FaTwitter } from 'react-icons/fa';
 import { cn, isPdf } from '@/lib/utils';
 import { uploadDirectToMediaProvider } from '@/lib/domains/media/client';
 import { toast } from 'sonner';
+import { siteConfig } from '@/config/site';
 
 interface InitialProfileData {
   headline?: string;
@@ -51,11 +52,11 @@ const initialState: { success?: boolean; error?: string } = {};
 export default function ProfileForm({ initialData, userData }: ProfileFormProps) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(updateProfile, initialState);
-  
+
   const [imagePreview, setImagePreview] = useState<string>(initialData?.image || '');
   const [imageUrl, setImageUrl] = useState<string>(initialData?.image || '');
   const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
-  
+
   const [resumePreview, setResumePreview] = useState<string>(initialData?.resumeUrl || '');
   const [resumeUrl, setResumeUrl] = useState<string>(initialData?.resumeUrl || '');
   const [resumeFileName, setResumeFileName] = useState<string>('');
@@ -148,8 +149,8 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
     const isAllowedExt = allowedExtensions.some(ext => lowerFileName.endsWith(ext));
 
     const allowedMimeTypes = [
-      'application/pdf', 
-      'application/msword', 
+      'application/pdf',
+      'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ];
 
@@ -188,26 +189,26 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
 
   const handleDownload = async () => {
     if (!resumePreview || !resumePreview.startsWith('http')) return;
-    
+
     try {
       const proxyUrl = `/api/download?url=${encodeURIComponent(resumePreview)}`;
-      
+
       const response = await fetch(proxyUrl);
       if (!response.ok) throw new Error('Download failed');
-      
+
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
-      
+
       const isPdfFile = isPdf(resumePreview);
       const fileName = `Harish_Ghorui_Resume${isPdfFile ? '.pdf' : '.docx'}`;
-      
+
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
       console.error('Download error:', error);
@@ -217,41 +218,41 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <User className="w-8 h-8 text-blue-600" />
+    <div className="max-w-4xl mx-auto py-4 sm:py-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <User className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
           Profile Settings
         </h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
+        <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Update your public profile information and social links.
         </p>
       </div>
 
       {!initialData && (
-        <div className="mb-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center gap-3 text-blue-700 dark:text-blue-400">
+        <div className="mb-6 sm:mb-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center gap-3 text-blue-700 dark:text-blue-400">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <p className="text-sm font-medium">Let&apos;s set up your profile to get started!</p>
         </div>
 
       )}
 
-      <form action={formAction} className="space-y-8">
+      <form action={formAction} className="space-y-6 sm:space-y-8">
         {/* User Account Info */}
-        <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-6">
-          <h2 className="text-xl font-semibold flex items-center gap-2 border-b border-gray-100 dark:border-zinc-800 pb-4">
+        <div className="bg-white dark:bg-zinc-900 p-4 sm:p-8 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-6">
+          <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2 border-b border-gray-100 dark:border-zinc-800 pb-4">
             <User className="w-5 h-4 text-gray-400" />
             Account Information
           </h2>
-          
-          <div className="flex flex-col md:flex-row gap-8">
+
+          <div className="flex flex-col items-center sm:items-start md:flex-row gap-6 sm:gap-8">
             {/* Profile Image Upload */}
             <div className="flex-shrink-0">
               <label className="text-sm font-semibold flex items-center gap-2 mb-2">
                 <ImageIcon className="w-4 h-4 text-gray-500" />
                 Profile Image
               </label>
-              <div className="relative w-40 h-40 group">
+              <div className="relative w-36 h-36 sm:w-40 sm:h-40 group">
                 {!imagePreview ? (
                   <div className="relative border-2 border-dashed border-gray-300 dark:border-zinc-700 rounded-full flex flex-col items-center justify-center hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer h-full w-full overflow-hidden">
                     <input
@@ -267,10 +268,10 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                 ) : (
                   <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-white dark:border-zinc-800 shadow-lg group">
                     {/* eslint-disable-next-line @next/next/no-img-element -- Local blob: avatar preview and in-flight upload cannot be optimized by next/image */}
-                    <img 
-                      src={imagePreview} 
-                      alt="Profile Preview" 
-                      className={cn("w-full h-full object-cover", isUploadingImage && "opacity-50")} 
+                    <img
+                      src={imagePreview}
+                      alt="Profile Preview"
+                      className={cn("w-full h-full object-cover", isUploadingImage && "opacity-50")}
                       referrerPolicy="no-referrer"
                     />
                     {isUploadingImage ? (
@@ -305,7 +306,7 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
               </div>
             </div>
 
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-semibold flex items-center gap-2">
                   First Name
@@ -317,7 +318,7 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                   required
                   pattern=".{2,}"
                   title="Minimum 2 characters"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                 />
               </div>
 
@@ -332,7 +333,7 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                   required
                   pattern=".{2,}"
                   title="Minimum 2 characters"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                 />
               </div>
 
@@ -341,8 +342,10 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                   Username (Public URL)
                 </label>
                 <div className="relative">
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-400 text-sm">portfolio-cms.com/</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
+                    <span className="text-gray-400 text-xs sm:text-sm font-mono flex-shrink-0">
+                      {siteConfig.url.replace(/^https?:\/\//, '').replace(/\/$/, '')}/
+                    </span>
                     <input
                       type="text"
                       name="username"
@@ -352,17 +355,18 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                       pattern="^[a-zA-Z0-9_-]{3,15}$"
                       title="3-15 characters, letters, numbers, underscores and hyphens only"
                       className={cn(
-                        "w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all",
+                        "w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm",
                         isUsernameAvailable === false && "border-red-500 focus:ring-red-500",
                         isUsernameAvailable === true && username !== userData?.username && "border-green-500 focus:ring-green-500"
                       )}
                     />
                   </div>
                   {isCheckingUsername && (
-                    <div className="absolute right-3 top-2.5">
+                    <div className="absolute right-3 top-9 sm:top-2.5">
                       <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
                     </div>
                   )}
+                </div>
                   {isUsernameAvailable === false && (
                     <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
                       <AlertCircle className="w-3 h-3" />
@@ -379,15 +383,14 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
               </div>
             </div>
           </div>
-        </div>
 
         {/* Basic Info */}
-        <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-6">
-          <h2 className="text-xl font-semibold flex items-center gap-2 border-b border-gray-100 dark:border-zinc-800 pb-4">
+        <div className="bg-white dark:bg-zinc-900 p-4 sm:p-8 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-6">
+          <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2 border-b border-gray-100 dark:border-zinc-800 pb-4">
             <Briefcase className="w-5 h-5 text-gray-400" />
             Basic Information
           </h2>
-          
+
           <div className="grid grid-cols-1 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-semibold flex items-center gap-2">
@@ -435,17 +438,17 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                     <p className="mt-2 text-sm text-gray-500 text-center">Click to upload resume (Max 5MB)</p>
                   </div>
                 ) : (
-                  <div className="relative bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 p-6 rounded-xl flex items-center justify-between gap-3 h-24 shadow-sm">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                  <div className="relative bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 p-4 sm:p-6 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-h-[5rem] shadow-sm">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                      <div className="p-2.5 sm:p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex-shrink-0">
                         {isUploadingResume ? (
-                          <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
+                          <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 dark:text-blue-400 animate-spin" />
                         ) : (
-                          <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                          <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 dark:text-blue-400" />
                         )}
                       </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[200px]">
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[180px] sm:max-w-[240px]">
                           {isUploadingResume ? (resumeFileName || 'Uploading resume...') : (resumeFileName || 'Resume Uploaded')}
                         </p>
                         <p className="text-xs text-gray-500">
@@ -453,12 +456,12 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                         </p>
                       </div>
                     </div>
-                    <div className="flex gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
                       {!isUploadingResume && resumePreview.startsWith('http') && (
                         <button
                           type="button"
                           onClick={handleDownload}
-                          className="px-4 py-2 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-xs font-bold hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors shadow-sm cursor-pointer"
+                          className="flex-1 sm:flex-initial text-center px-4 py-2 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-xs font-bold hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors shadow-sm cursor-pointer"
                         >
                           Download
                         </button>
@@ -467,7 +470,7 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                         <button
                           type="button"
                           onClick={clearResume}
-                          className="px-4 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors"
+                          className="flex-1 sm:flex-initial text-center px-4 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors"
                         >
                           Change
                         </button>
@@ -482,13 +485,13 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
         </div>
 
         {/* Social Links */}
-        <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-6">
-          <h2 className="text-xl font-semibold flex items-center gap-2 border-b border-gray-100 dark:border-zinc-800 pb-4">
+        <div className="bg-white dark:bg-zinc-900 p-4 sm:p-8 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-6">
+          <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2 border-b border-gray-100 dark:border-zinc-800 pb-4">
             <Globe className="w-5 h-5 text-gray-400" />
             Social Links
           </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-2">
               <label className="text-sm font-semibold flex items-center gap-2">
                 <FaGithub className="w-4 h-4 text-gray-500" />
@@ -498,7 +501,7 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                 type="text"
                 name="github"
                 defaultValue={initialData?.socialLinks?.github || ''}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                 placeholder="https://github.com/username"
               />
             </div>
@@ -512,7 +515,7 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                 type="text"
                 name="linkedin"
                 defaultValue={initialData?.socialLinks?.linkedin || ''}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                 placeholder="https://linkedin.com/in/username"
               />
             </div>
@@ -526,7 +529,7 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                 type="text"
                 name="twitter"
                 defaultValue={initialData?.socialLinks?.twitter || ''}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                 placeholder="https://twitter.com/username"
               />
             </div>
@@ -540,18 +543,18 @@ export default function ProfileForm({ initialData, userData }: ProfileFormProps)
                 type="text"
                 name="website"
                 defaultValue={initialData?.socialLinks?.website || ''}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                 placeholder="https://yourwebsite.com"
               />
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-2">
           <button
             type="submit"
             disabled={isPending || isUploadingImage || isUploadingResume || isUsernameAvailable === false}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-all flex items-center justify-center gap-2 min-w-[200px]"
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-all flex items-center justify-center gap-2 min-w-[180px] sm:min-w-[200px]"
           >
             {isPending || isUploadingImage || isUploadingResume ? (
               <>

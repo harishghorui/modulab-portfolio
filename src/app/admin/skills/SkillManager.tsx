@@ -35,7 +35,7 @@ interface SkillManagerProps {
 export default function SkillManager({ initialSkills, initialCategories }: SkillManagerProps) {
   const [skills, setSkills] = useState(initialSkills);
   const [categories, setCategories] = useState(initialCategories);
-  
+
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
@@ -44,7 +44,7 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
   const [selectedIcon, setSelectedIcon] = useState('');
   const [isColored, setIsColored] = useState(true);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  
+
   const [catPending, startCatTransition] = useTransition();
   const [skillPending, startSkillTransition] = useTransition();
 
@@ -170,28 +170,28 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
   const finalIconClass = selectedIcon ? `${selectedIcon}${isColored ? ' colored' : ''}` : '';
 
   return (
-    <div className="max-w-6xl mx-auto py-10 px-6 space-y-12">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <Brain className="w-8 h-8 text-blue-600" />
+    <div className="max-w-6xl mx-auto py-4 sm:py-8 space-y-8 sm:space-y-12">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <Brain className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
           Manage Skills & Categories
         </h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
+        <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Organize your technical expertise with Devicon integration.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         {/* CATEGORIES SECTION */}
         <div className="space-y-6">
           <div className="flex items-center gap-2 border-b border-gray-200 dark:border-zinc-800 pb-2">
             <Tag className="w-5 h-5 text-blue-600" />
-            <h2 className="text-xl font-bold">Categories</h2>
+            <h2 className="text-lg sm:text-xl font-bold">Categories</h2>
           </div>
 
-          <form ref={categoryFormRef} action={handleCatSubmit} className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-4">
+          <form ref={categoryFormRef} action={handleCatSubmit} className="bg-white dark:bg-zinc-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-sm uppercase tracking-wider text-gray-500">
+              <h3 className="font-semibold text-xs sm:text-sm uppercase tracking-wider text-gray-500">
                 {editingCategory ? 'Edit Category' : 'Add New Category'}
               </h3>
               {editingCategory && (
@@ -203,7 +203,7 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
 
             {editingCategory && <input type="hidden" name="id" value={editingCategory._id} />}
 
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 key={editingCategory?._id || 'new-cat'}
                 type="text"
@@ -216,7 +216,7 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
               <button
                 type="submit"
                 disabled={catPending}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2"
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 w-full sm:w-auto"
               >
                 {catPending ? <Loader2 className="w-4 h-4 animate-spin" /> : editingCategory ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                 {editingCategory ? 'Update' : 'Add'}
@@ -224,37 +224,39 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
             </div>
           </form>
 
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 dark:bg-zinc-800/50">
-                <tr>
-                  <th className="px-6 py-3 font-semibold">Name</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                {categories.map(cat => (
-                  <tr key={cat._id} className={editingCategory?._id === cat._id ? "bg-blue-50 dark:bg-blue-900/10" : ""}>
-                    <td className="px-6 py-3 font-medium">{cat.name}</td>
-                    <td className="px-6 py-3 text-right space-x-2">
-                      <button onClick={() => setEditingCategory(cat)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md">
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <ConfirmDialog
-                        trigger={
-                          <button className="p-1.5 text-red-600 hover:bg-red-50 rounded-md">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        }
-                        title="Delete Category?"
-                        description="Categories with skills cannot be deleted. This action cannot be undone."
-                        onConfirm={() => handleDeleteCategory(cat._id)}
-                      />
-                    </td>
+          <div className="bg-white dark:bg-zinc-900 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm min-w-[240px]">
+                <thead className="bg-gray-50 dark:bg-zinc-800/50">
+                  <tr>
+                    <th className="px-4 sm:px-6 py-3 font-semibold">Name</th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                  {categories.map(cat => (
+                    <tr key={cat._id} className={editingCategory?._id === cat._id ? "bg-blue-50 dark:bg-blue-900/10" : ""}>
+                      <td className="px-4 sm:px-6 py-3 font-medium">{cat.name}</td>
+                      <td className="px-4 sm:px-6 py-3 text-right space-x-2">
+                        <button onClick={() => setEditingCategory(cat)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md">
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <ConfirmDialog
+                          trigger={
+                            <button className="p-1.5 text-red-600 hover:bg-red-50 rounded-md">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          }
+                          title="Delete Category?"
+                          description="Categories with skills cannot be deleted. This action cannot be undone."
+                          onConfirm={() => handleDeleteCategory(cat._id)}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -262,12 +264,12 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
         <div className="space-y-6">
           <div className="flex items-center gap-2 border-b border-gray-200 dark:border-zinc-800 pb-2">
             <Brain className="w-5 h-5 text-blue-600" />
-            <h2 className="text-xl font-bold">Skills</h2>
+            <h2 className="text-lg sm:text-xl font-bold">Skills</h2>
           </div>
 
-          <form ref={skillFormRef} action={handleSkillSubmit} className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-4">
+          <form ref={skillFormRef} action={handleSkillSubmit} className="bg-white dark:bg-zinc-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-sm uppercase tracking-wider text-gray-500">
+              <h3 className="font-semibold text-xs sm:text-sm uppercase tracking-wider text-gray-500">
                 {editingSkill ? 'Edit Skill' : 'Add New Skill'}
               </h3>
               {editingSkill && (
@@ -283,7 +285,7 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
 
             {editingSkill && <input type="hidden" name="id" value={editingSkill._id} />}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase">Skill Name</label>
                 <input
@@ -332,7 +334,7 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
                     className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                     placeholder="Search Devicon (e.g. react, node)"
                   />
-                  
+
                   {showSuggestions && filteredIcons.length > 0 && (
                     <div ref={suggestionsRef} className="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-xl max-h-60 overflow-y-auto custom-scrollbar">
                       {filteredIcons.map((iconClass) => (
@@ -358,9 +360,9 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
                 </div>
 
                 {/* Preview Box */}
-                <div className="w-12 h-12 rounded-lg border border-gray-200 dark:border-zinc-800 flex items-center justify-center bg-gray-50 dark:bg-zinc-800 p-2">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg border border-gray-200 dark:border-zinc-800 flex items-center justify-center bg-gray-50 dark:bg-zinc-800 p-2 flex-shrink-0">
                   {selectedIcon ? (
-                    <Devicon icon={finalIconClass} className="w-8 h-8 object-contain transition-all" />
+                    <Devicon icon={finalIconClass} className="w-7 h-7 sm:w-8 sm:h-8 object-contain transition-all" />
                   ) : (
                     <span className="text-[10px] text-gray-400 text-center px-1 leading-tight">No Icon</span>
                   )}
@@ -370,79 +372,81 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
               {selectedIcon && (
                 <div className="flex items-center gap-2 pt-2">
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={isColored} 
+                    <input
+                      type="checkbox"
+                      checked={isColored}
                       onChange={(e) => setIsColored(e.target.checked)}
-                      className="sr-only peer" 
+                      className="sr-only peer"
                     />
                     <div className="w-7 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
                     <span className="ml-2 text-[10px] font-bold text-gray-500 uppercase">Use Colored Version</span>
                   </label>
                 </div>
               )}
-              
+
               <input type="hidden" name="icon" value={finalIconClass} />
             </div>
 
             <button
               type="submit"
               disabled={skillPending || !selectedIcon}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2"
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2"
             >
               {skillPending ? <Loader2 className="w-4 h-4 animate-spin" /> : editingSkill ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
               {editingSkill ? 'Update Skill' : 'Add Skill'}
             </button>
           </form>
 
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 dark:bg-zinc-800/50">
-                <tr>
-                  <th className="px-6 py-3 font-semibold">Skill</th>
-                  <th className="px-6 py-3 font-semibold">Category</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                {skills.length === 0 ? (
-                  <tr><td colSpan={3} className="px-6 py-10 text-center text-gray-500">No skills added yet.</td></tr>
-                ) : (
-                  skills.map(skill => (
-                    <tr key={skill._id} className={editingSkill?._id === skill._id ? "bg-blue-50 dark:bg-blue-900/10" : ""}>
-                      <td className="px-6 py-3 font-medium">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded bg-gray-50 dark:bg-zinc-800 p-1 flex items-center justify-center border border-gray-100 dark:border-zinc-700">
-                            <Devicon icon={skill.icon} alt={skill.name} className="w-6 h-6 object-contain" />
+          <div className="bg-white dark:bg-zinc-900 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm min-w-[280px]">
+                <thead className="bg-gray-50 dark:bg-zinc-800/50">
+                  <tr>
+                    <th className="px-4 sm:px-6 py-3 font-semibold">Skill</th>
+                    <th className="px-4 sm:px-6 py-3 font-semibold">Category</th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                  {skills.length === 0 ? (
+                    <tr><td colSpan={3} className="px-4 sm:px-6 py-8 sm:py-10 text-center text-sm text-gray-500">No skills added yet.</td></tr>
+                  ) : (
+                    skills.map(skill => (
+                      <tr key={skill._id} className={editingSkill?._id === skill._id ? "bg-blue-50 dark:bg-blue-900/10" : ""}>
+                        <td className="px-4 sm:px-6 py-3 font-medium">
+                          <div className="flex items-center gap-3">
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-gray-50 dark:bg-zinc-800 p-1 flex items-center justify-center border border-gray-100 dark:border-zinc-700 flex-shrink-0">
+                              <Devicon icon={skill.icon} alt={skill.name} className="w-5 h-5 sm:w-6 sm:h-6 object-contain" />
+                            </div>
+                            <span className="truncate">{skill.name}</span>
                           </div>
-                          {skill.name}
-                        </div>
-                      </td>
-                      <td className="px-6 py-3">
-                        <span className="px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-full text-[11px] font-semibold">
-                          {skill.category?.name || 'Uncategorized'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3 text-right space-x-2">
-                        <button onClick={() => startEditingSkill(skill)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md">
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <ConfirmDialog
-                          trigger={
-                            <button className="p-1.5 text-red-600 hover:bg-red-50 rounded-md">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          }
-                          title="Delete Skill?"
-                          description={`Are you sure you want to delete "${skill.name}"? This action cannot be undone.`}
-                          onConfirm={() => handleDeleteSkill(skill._id)}
-                        />
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3">
+                          <span className="px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-full text-[11px] font-semibold">
+                            {skill.category?.name || 'Uncategorized'}
+                          </span>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 text-right space-x-1 sm:space-x-2">
+                          <button onClick={() => startEditingSkill(skill)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md">
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <ConfirmDialog
+                            trigger={
+                              <button className="p-1.5 text-red-600 hover:bg-red-50 rounded-md">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            }
+                            title="Delete Skill?"
+                            description={`Are you sure you want to delete "${skill.name}"? This action cannot be undone.`}
+                            onConfirm={() => handleDeleteSkill(skill._id)}
+                          />
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

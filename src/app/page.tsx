@@ -42,9 +42,9 @@ export default function PortfolioProductPage() {
               width={240}
               height={64}
               priority
-              className="h-10 w-auto"
+              className="h-6 w-auto"
             />
-            <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-zinc-400 pl-1 self-center">
+            <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-zinc-400">
               Portfolio
             </span>
           </Link>

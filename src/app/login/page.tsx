@@ -86,9 +86,9 @@ function AuthForm() {
             <Image
               src="/branding/logo-full.png"
               alt="Modulab"
-              width={200}
-              height={56}
-              className="h-10 w-auto"
+              width={120}
+              height={32}
+              className="h-6 w-auto"
             />
           </Link>
           <h2 className="text-3xl font-bold tracking-tight text-gray-900">

@@ -2,15 +2,15 @@
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { 
-  Bold, 
-  Italic, 
-  List, 
-  ListOrdered, 
-  Heading1, 
-  Heading2, 
-  Quote, 
-  Undo, 
+import {
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Heading1,
+  Heading2,
+  Quote,
+  Undo,
   Redo,
   Code
 } from 'lucide-react';
@@ -21,14 +21,14 @@ interface RichTextEditorProps {
   placeholder?: string;
 }
 
-const MenuButton = ({ 
-  onClick, 
-  isActive = false, 
-  disabled = false, 
-  children 
-}: { 
-  onClick: () => void; 
-  isActive?: boolean; 
+const MenuButton = ({
+  onClick,
+  isActive = false,
+  disabled = false,
+  children
+}: {
+  onClick: () => void;
+  isActive?: boolean;
   disabled?: boolean;
   children: React.ReactNode;
 }) => (
@@ -37,8 +37,8 @@ const MenuButton = ({
     onClick={onClick}
     disabled={disabled}
     className={`p-2 rounded-md transition-colors ${
-      isActive 
-        ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
+      isActive
+        ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
         : 'hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-gray-400'
     } disabled:opacity-50 disabled:cursor-not-allowed`}
   >
@@ -61,7 +61,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[200px] px-4 py-3',
+        class: 'prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[200px] px-4 py-3 break-words',
       },
     },
     immediatelyRender: false,
