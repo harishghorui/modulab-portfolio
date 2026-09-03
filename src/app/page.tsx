@@ -58,25 +58,25 @@ function BrowserMockupFrame({
     <div
       className={`rounded-2xl sm:rounded-3xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl shadow-zinc-900/10 dark:shadow-blue-500/5 overflow-hidden ring-1 ring-zinc-900/5 dark:ring-white/10 ${className}`}
     >
-      {/* Browser Window Header */}
-      <div className="h-10 sm:h-11 px-4 sm:px-5 flex items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-900/80 select-none">
+      {/* Browser Window Header (Proportionally scaled on mobile, full desktop chrome preserved) */}
+      <div className="h-7 sm:h-11 px-2.5 sm:px-5 flex items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-900/80 select-none gap-1.5 sm:gap-3">
         {/* Window Dots */}
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-red-400/80 dark:bg-red-500/40 border border-red-500/30" />
-          <div className="w-3 h-3 rounded-full bg-amber-400/80 dark:bg-amber-500/40 border border-amber-500/30" />
-          <div className="w-3 h-3 rounded-full bg-green-400/80 dark:bg-green-500/40 border border-green-500/30" />
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          <div className="w-1.5 h-1.5 sm:w-3 sm:h-3 rounded-full bg-red-400/80 dark:bg-red-500/40 border border-red-500/30" />
+          <div className="w-1.5 h-1.5 sm:w-3 sm:h-3 rounded-full bg-amber-400/80 dark:bg-amber-500/40 border border-amber-500/30" />
+          <div className="w-1.5 h-1.5 sm:w-3 sm:h-3 rounded-full bg-green-400/80 dark:bg-green-500/40 border border-green-500/30" />
         </div>
 
         {/* URL Pill */}
-        <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-white dark:bg-zinc-800/80 text-[11px] sm:text-xs font-mono text-zinc-600 dark:text-zinc-400 max-w-[220px] sm:max-w-md truncate border border-zinc-200 dark:border-zinc-700/50 shadow-xs">
-          <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+        <div className="flex items-center gap-1 sm:gap-2 px-2 py-0.5 sm:px-3 sm:py-1 rounded-md bg-white dark:bg-zinc-800/80 text-[9px] sm:text-xs font-mono text-zinc-600 dark:text-zinc-400 min-w-0 max-w-[140px] sm:max-w-md truncate border border-zinc-200 dark:border-zinc-700/50 shadow-xs">
+          <Lock className="w-2 h-2 sm:w-3 sm:h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <span className="truncate">{url}</span>
         </div>
 
         {/* Status Pill */}
-        <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span>{statusText}</span>
+        <div className="flex items-center gap-1 sm:gap-1.5 text-[8.5px] sm:text-[11px] font-medium text-zinc-500 dark:text-zinc-400 shrink-0">
+          <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="truncate max-w-[70px] sm:max-w-none">{statusText}</span>
         </div>
       </div>
 
@@ -364,44 +364,44 @@ export default function PortfolioLandingPage() {
       {/* QUICK VALUE PROPOSITION BAR */}
       <section className="py-8 sm:py-10 border-y border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-950/40">
         <div className="container max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-blue-100/70 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex-shrink-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+            <div className="flex items-center gap-3.5 min-w-0 p-3 sm:p-0 rounded-xl bg-white/50 dark:bg-zinc-900/30 sm:bg-transparent sm:dark:bg-transparent border border-zinc-200/50 dark:border-zinc-800/50 sm:border-0">
+              <div className="p-2.5 rounded-xl bg-blue-100/70 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shrink-0">
                 <Globe className="w-5 h-5" />
               </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">Personalized URL</p>
-                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-200">portfolio.modulab.online/[name]</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-zinc-500">Personalized URL</p>
+                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-200 truncate">portfolio.modulab.online/[name]</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-indigo-100/70 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex-shrink-0">
+            <div className="flex items-center gap-3.5 min-w-0 p-3 sm:p-0 rounded-xl bg-white/50 dark:bg-zinc-900/30 sm:bg-transparent sm:dark:bg-transparent border border-zinc-200/50 dark:border-zinc-800/50 sm:border-0">
+              <div className="p-2.5 rounded-xl bg-indigo-100/70 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 shrink-0">
                 <Brain className="w-5 h-5" />
               </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">Tech Stack Taxonomy</p>
-                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-200">100+ Official Devicons</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-zinc-500">Tech Stack Taxonomy</p>
+                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-200 truncate">100+ Official Devicons</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-emerald-100/70 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex-shrink-0">
+            <div className="flex items-center gap-3.5 min-w-0 p-3 sm:p-0 rounded-xl bg-white/50 dark:bg-zinc-900/30 sm:bg-transparent sm:dark:bg-transparent border border-zinc-200/50 dark:border-zinc-800/50 sm:border-0">
+              <div className="p-2.5 rounded-xl bg-emerald-100/70 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shrink-0">
                 <Cloud className="w-5 h-5" />
               </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">Media Pipeline</p>
-                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-200">Cloudinary CDN & Resumes</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-zinc-500">Media Pipeline</p>
+                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-200 truncate">Cloudinary CDN & Resumes</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-amber-100/70 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex-shrink-0">
+            <div className="flex items-center gap-3.5 min-w-0 p-3 sm:p-0 rounded-xl bg-white/50 dark:bg-zinc-900/30 sm:bg-transparent sm:dark:bg-transparent border border-zinc-200/50 dark:border-zinc-800/50 sm:border-0">
+              <div className="p-2.5 rounded-xl bg-amber-100/70 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 shrink-0">
                 <Cpu className="w-5 h-5" />
               </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">Fast Edge Delivery</p>
-                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-200">Next.js 16 Server Engine</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-zinc-500">Fast Edge Delivery</p>
+                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-200 truncate">Next.js 16 Server Engine</p>
               </div>
             </div>
           </div>
@@ -718,41 +718,41 @@ export default function PortfolioLandingPage() {
             initial="initial"
             whileInView="whileInView"
             viewport={{ once: true }}
-            className="grid grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8"
+            className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6 md:gap-8"
           >
             {[
               {
-                icon: <Terminal className="w-6 h-6 text-blue-600 dark:text-blue-400" />,
+                icon: <Terminal className="w-4.5 h-4.5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />,
                 title: 'Next.js 16',
                 badge: 'Framework',
                 desc: 'App Router, Turbopack, and React 19 Server Components for instant rendering.',
               },
               {
-                icon: <Database className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />,
+                icon: <Database className="w-4.5 h-4.5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400" />,
                 title: 'MongoDB & Mongoose',
                 badge: 'Database',
                 desc: 'Strict Single-Writer domain architecture with encapsulated models and TTL caching.',
               },
               {
-                icon: <ShieldCheck className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />,
+                icon: <ShieldCheck className="w-4.5 h-4.5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />,
                 title: 'NextAuth.js v5',
                 badge: 'Security',
                 desc: 'JWT session tokens with bcrypt encryption (12 salt rounds) and proxy-level protection.',
               },
               {
-                icon: <Cloud className="w-6 h-6 text-sky-600 dark:text-sky-400" />,
+                icon: <Cloud className="w-4.5 h-4.5 sm:w-6 sm:h-6 text-sky-600 dark:text-sky-400" />,
                 title: 'Cloudinary CDN',
                 badge: 'Media Pipeline',
                 desc: 'Direct client-side uploads, automatic image optimization, and signed resume streams.',
               },
               {
-                icon: <Layers className="w-6 h-6 text-purple-600 dark:text-purple-400" />,
+                icon: <Layers className="w-4.5 h-4.5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />,
                 title: 'Tailwind CSS v4',
                 badge: 'Design System',
                 desc: 'Automatic device light/dark mode adaptation with zero layout shifts or theme flicker.',
               },
               {
-                icon: <Cpu className="w-6 h-6 text-amber-600 dark:text-amber-400" />,
+                icon: <Cpu className="w-4.5 h-4.5 sm:w-6 sm:h-6 text-amber-600 dark:text-amber-400" />,
                 title: 'Devicon Ecosystem',
                 badge: 'Iconography',
                 desc: 'CDN-powered developer vector icons for accurate technology stack visualization.',
@@ -761,20 +761,22 @@ export default function PortfolioLandingPage() {
               <motion.div
                 key={i}
                 variants={fadeInUp}
-                className="p-6 sm:p-7 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all shadow-xs"
+                className="p-3.5 sm:p-6 md:p-7 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all shadow-xs flex flex-col justify-between"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-700/60">
-                    {tech.icon}
+                <div>
+                  <div className="flex items-start sm:items-center justify-between gap-1.5 sm:gap-2 mb-2.5 sm:mb-4">
+                    <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-700/60 shrink-0">
+                      {tech.icon}
+                    </div>
+                    <span className="text-[9px] sm:text-[10px] font-mono font-semibold uppercase px-1.5 sm:px-2 py-0.5 rounded sm:rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-right leading-tight break-words">
+                      {tech.badge}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
-                    {tech.badge}
-                  </span>
+                  <h3 className="text-[13px] sm:text-base md:text-lg font-bold text-zinc-900 dark:text-white mb-1.5 sm:mb-2 leading-snug sm:leading-normal">
+                    {tech.title}
+                  </h3>
                 </div>
-                <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white mb-2">
-                  {tech.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                <p className="text-[11px] sm:text-xs md:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed sm:leading-relaxed">
                   {tech.desc}
                 </p>
               </motion.div>
