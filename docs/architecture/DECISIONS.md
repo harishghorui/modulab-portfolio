@@ -283,3 +283,39 @@ Following the repository separation, the Portfolio product was initially deploye
   - Zero downtime and full link preservation via Vercel 308 domain redirection.
 * **Negative**:
   - Requires updating documentation, environment variables, and DNS records.
+
+---
+
+## ADR-013: Interim In-App Password Management within the Identity Domain
+
+### Status
+**Accepted — Interim Architecture**
+
+### Context
+The current Modulab platform does not yet provide an email-based forgot-password or account-recovery mechanism. Users require the ability to update their account credentials from within the authenticated Admin Studio (`/admin/security`).
+
+The long-term Modulab roadmap includes a centralized, independently deployable Auth Service across ecosystem products. We evaluated whether to introduce third-party recovery infrastructure immediately or implement in-app password changes within the existing modular monolith boundaries.
+
+### Decision
+1. **Authenticated In-App Password Management**: Provide password update functionality at `/admin/security` (`ChangePasswordForm.tsx` and `actions.ts`), restricted strictly to authenticated sessions.
+2. **Identity Domain Encapsulation**: Delegate all password verification, hashing, and database persistence to the Identity domain service helper [`src/lib/domains/identity/changeAuthenticatedPassword.ts`](file:///home/harish/Harish/Git/Modulab/src/lib/domains/identity/changeAuthenticatedPassword.ts).
+3. **Security Invariants**:
+   - Require the user's existing `currentPassword` and verify it against the stored bcrypt hash using `bcrypt.compare`.
+   - Validate new password length (minimum 8, maximum 128 characters) and enforce dissimilarity from current password.
+   - Hash new passwords with `bcryptjs` using 12 salt rounds.
+   - Prohibit direct `User` model imports or password hashing outside the Identity domain, upholding the Single-Writer Rule.
+
+### Rationale
+* **Encapsulation Precedes Extraction**: Encapsulating password mutations behind an explicit Identity domain boundary ensures zero cross-domain coupling. When the centralized Auth Service is eventually introduced, the calling UI and action layers can be redirected to an external API with minimal blast radius.
+* **Avoid Premature Complexity**: Avoids introducing disposable email delivery infrastructure before the centralized identity architecture is designed.
+
+### Future Migration Trigger
+When the centralized Modulab Auth Service is implemented to manage cross-product authentication, credentials, and password recovery across the ecosystem, this local credential mutation service will be migrated or retired.
+
+### Consequences
+* **Positive**:
+  - Delivers secure password management with verified existing passwords and 12-round bcrypt hashing.
+  - Strictly preserves Single-Writer model isolation for `User.password`.
+  - Maintains clean forward compatibility for future Auth Service extraction.
+* **Negative**:
+  - Unauthenticated users who lose access to their password cannot self-recover until the centralized Auth Service with email recovery is deployed.

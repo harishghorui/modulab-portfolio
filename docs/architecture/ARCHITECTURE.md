@@ -68,7 +68,8 @@ flowchart TD
 | :--- | :--- | :--- | :--- |
 | `/` | **Portfolio Landing** | Product marketing, feature overview, onboarding | No |
 | `/[username]` | **Public Portfolios** | Dynamic server-rendered developer portfolios | No |
-| `/admin/*` | **Portfolio Studio CMS** | Project CRUD, skill matrix, categories, profile | Yes (Redirects to `/login`) |
+| `/admin/*` | **Portfolio Studio CMS** | Project CRUD, skill matrix, categories, profile, security | Yes (Redirects to `/login`) |
+| `/admin/security` | **Security Settings** | Authenticated password change with current password verification | Yes (Redirects to `/login`) |
 | `/login` | **Authentication** | Sign-in & sign-up modal / form | No (Redirects to `/admin` if logged in) |
 | `/api/auth/*` | **NextAuth Handlers** | Session verification, sign-in, JWT callbacks | No |
 | `/api/register` | **User Registration** | Public tenant registration | No |
@@ -88,7 +89,7 @@ flowchart TD
 * **Purpose**: Server-rendered, highly optimized public portfolio page for any registered developer tenant.
 * **Key Components**:
   * [`src/app/[username]/page.tsx`](file:///home/harish/Harish/Git/Modulab/src/app/%5Busername%5D/page.tsx): Thin Server Component invoking the canonical in-process query helper `getPublicPortfolioData(username)` from `@/lib/domains/public-portfolio`.
-  * [`src/app/[username]/PortfolioClient.tsx`](file:///home/harish/Harish/Git/Modulab/src/app/%5Busername%5D/PortfolioClient.tsx): Client Component rendering hero, project filter tabs, modal dialogs, and responsive navigation from serialized props.
+  * [`src/app/[username]/PortfolioClient.tsx`](file:///home/harish/Harish/Git/Modulab/src/app/%5Busername%5D/PortfolioClient.tsx): Client Component rendering hero, dedicated public navbar with section scrolling, dynamic CMS-derived category filters, responsive browser mockup header, technical skills bento grid, case studies, and contact CTA from serialized props.
   * Metadata Generator: Dynamically populates SEO `title` and `description` from the domain query result.
 
 ### 3.4 Portfolio Studio / CMS (`src/app/admin/`)
@@ -99,6 +100,7 @@ flowchart TD
   * **Categories Manager (`/admin/categories`)**: Dynamic category management for project taxonomy.
   * **Skills Manager (`/admin/skills`)**: Skill catalog management with integrated Devicon SVG search and category grouping.
   * **Profile Settings (`/admin/profile`)**: Bio, headline, social links, profile photo, and resume upload with proxy download capabilities.
+  * **Security Settings (`/admin/security`)**: Password management allowing authenticated users to change their password after verifying their current password. All credential hashing (bcrypt with 12 salt rounds) and database mutations are delegated to the Identity domain (`changeAuthenticatedPassword`), serving as an intentional interim architecture prior to a centralized Auth Service (no email-based recovery currently provided).
 
 ### 3.5 Identity & Authentication Engine
 * **Purpose**: Shared authentication provider across platform and product surfaces.
@@ -344,3 +346,4 @@ flowchart TD
 3. **Data Integrity**: Database model names (`User`, `Profile`, `Project`, `Skill`, `Category`, `SkillCategory`) and Cloudinary storage paths (`Modulab/...`) must remain stable to prevent breaking existing data.
 4. **Standard API Response Format**: All route handlers and server actions must conform to `{ success: boolean, data?: any, error?: string }`.
 5. **Ownership Precedes Extraction**: A future service may only own data and mutations that already have a clearly established, isolated owner in the modular monolith.
+6. **Root Layout Scroll Behavior**: In Next.js 16 App Router, smooth scrolling is enabled via the `data-scroll-behavior="smooth"` attribute on `<html>` in `src/app/layout.tsx` to ensure smooth anchor scrolling while preventing animated scroll interference during route transitions.

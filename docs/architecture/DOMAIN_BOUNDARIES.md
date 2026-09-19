@@ -76,6 +76,7 @@ flowchart LR
 | Calling Location | Allowed Imports | Prohibited Imports |
 | :--- | :--- | :--- |
 | **`src/app/admin/profile/*`** | • `@/models/Profile`<br/>• `@/lib/domains/identity` (`updateUserIdentity`, `getUserIdentity`)<br/>• `@/lib/domains/profile` (`getProfileByUserId`)<br/>• `@/lib/domains/media` / `@/lib/domains/media/client`<br/>• `@/lib/utils` | ❌ `import User from '@/models/User'` *(Prohibited)*<br/>❌ Direct writes to `User` collection |
+| **`src/app/admin/security/*`** | • `@/lib/domains/identity` (`changeAuthenticatedPassword`)<br/>• `@/auth`<br/>• Shared UI components (`@/components/ui/*`) | ❌ `import User from '@/models/User'` *(Prohibited)*<br/>❌ Direct writes/mutations to `User` collection<br/>❌ Inline password hashing (bcrypt outside Identity domain) |
 | **`src/app/admin/projects/*`** | • `@/models/Project`<br/>• `@/models/Category`<br/>• `@/models/Skill`<br/>• `@/lib/domains/media` / `@/lib/domains/media/client`<br/>• `@/lib/utils` | ❌ `@/models/User`<br/>❌ `@/models/Profile`<br/>❌ Direct mutations to non-CMS models |
 | **`src/app/admin/skills/*`** | • `@/models/Skill`<br/>• `@/models/SkillCategory`<br/>• `@/lib/devicon`<br/>• `@/lib/utils` | ❌ `@/models/User`<br/>❌ `@/models/Project`<br/>❌ `@/models/Profile` |
 | **`src/app/admin/categories/*`** | • `@/models/Category`<br/>• `@/lib/utils` | ❌ `@/models/User`<br/>❌ `@/models/Project` |
